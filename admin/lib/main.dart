@@ -9,6 +9,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/hotels/manage_hotels_screen.dart';
 import 'screens/rooms/manage_rooms_screen.dart';
 import 'screens/bookings/manage_bookings_screen.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,18 +31,15 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Lodge Booking — Admin',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.indigo,
-          useMaterial3: true,
-        ),
+        theme: buildAppTheme(),
         initialRoute: '/',
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
           '/dashboard': (context) => const DashboardScreen(),
-          '/hotels': (context) => const ManageHotelsScreen(),
-          '/rooms': (context) => const ManageRoomsScreen(),
-          '/bookings': (context) => const ManageBookingsScreen(),
+          '/hotels': (context) => ManageHotelsScreen(),
+          '/rooms': (context) => ManageRoomsScreen(),
+          '/bookings': (context) => ManageBookingsScreen(),
         },
       ),
     );

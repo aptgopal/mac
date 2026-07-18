@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/hotel.dart';
 import '../models/room.dart';
@@ -6,6 +7,7 @@ import '../models/booking.dart';
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  // ---------------- Hotels ----------------
   Stream<List<Hotel>> streamHotels() {
     return _db
         .collection('hotels')
@@ -37,6 +39,7 @@ class FirestoreService {
     await batch.commit();
   }
 
+  // ---------------- Rooms ----------------
   Stream<List<Room>> streamRooms(String hotelId) {
     return _db
         .collection('hotels')
@@ -46,6 +49,16 @@ class FirestoreService {
         .snapshots()
         .map((snap) => snap.docs
             .map((d) => Room.fromMap(d.id, hotelId, d.data()))
+            .toList());
+  }
+
+  Stream<List<Room>> streamAllRooms() {
+    return _db
+        .collectionGroup('rooms')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) =>
+                Room.fromMap(d.id, d.reference.parent.parent!.id, d.data()))
             .toList());
   }
 
@@ -75,6 +88,7 @@ class FirestoreService {
         .delete();
   }
 
+  // ---------------- Bookings ----------------
   Stream<List<Booking>> streamBookings() {
     return _db
         .collection('bookings')

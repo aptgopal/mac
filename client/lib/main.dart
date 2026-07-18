@@ -33,6 +33,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.teal,
           useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+          cardColor: Colors.white,
         ),
         initialRoute: '/',
         routes: {

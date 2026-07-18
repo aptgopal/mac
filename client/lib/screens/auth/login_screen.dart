@@ -45,45 +45,78 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (v) =>
-                    v != null && v.contains('@') ? null : 'Enter a valid email',
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (v) =>
-                    v != null && v.length >= 6 ? null : 'Min 6 characters',
-              ),
-              const SizedBox(height: 24),
-              _loading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: _submit,
-                      child: const Text('Login'),
+      backgroundColor: Colors.teal,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.hotel, size: 80, color: Colors.white),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Lodge Booking',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-              TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pushNamed('/register'),
-                child: const Text('Create an account'),
+                  ),
+                  const SizedBox(height: 48),
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) =>
+                        v != null && v.contains('@') ? null : 'Enter a valid email',
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                    validator: (v) =>
+                        v != null && v.length >= 6 ? null : 'Min 6 characters',
+                  ),
+                  const SizedBox(height: 24),
+                  _loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _submit,
+                            style: ButtonStyle(backgroundColor: WidgetStateProperty.all(Colors.white), foregroundColor: WidgetStateProperty.all(Colors.teal), padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 16))),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/register'),
+                    child: const Text('Create an account', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+

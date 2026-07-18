@@ -21,19 +21,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'WEB_API_KEY',
-    appId: 'WEB_APP_ID',
-    messagingSenderId: 'SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    authDomain: 'YOUR_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyAM0IFIpLcfrCE6HoHaKAin2DZnJhAET30',
+    appId: '1:3336360452:web:91a13983dcc2158ade1b51',
+    messagingSenderId: '3336360452',
+    projectId: 'lodge-booking-flutter',
+    authDomain: 'lodge-booking-flutter.firebaseapp.com',
+    storageBucket: 'lodge-booking-flutter.firebasestorage.app',
+    measurementId: 'G-22NTMK8M5R',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'ANDROID_API_KEY',
-    appId: 'ANDROID_APP_ID',
-    messagingSenderId: 'SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_PROJECT_ID.appspot.com',
+    apiKey: 'AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o',
+    appId: '1:3336360452:android:4151ba3098afbe19de1b51',
+    messagingSenderId: '3336360452',
+    projectId: 'lodge-booking-flutter',
+    storageBucket: 'lodge-booking-flutter.firebasestorage.app',
   );
 }
