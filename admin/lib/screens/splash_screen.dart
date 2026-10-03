@@ -13,7 +13,7 @@ class SplashScreen extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: CircularProgressIndicator(color: Color(0xFF003580))),
           );
         }
         if (snapshot.hasData) {
@@ -24,7 +24,7 @@ class SplashScreen extends StatelessWidget {
               Navigator.of(context).pushReplacementNamed('/login'));
         }
         return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
+          body: Center(child: CircularProgressIndicator(color: Color(0xFF003580))),
         );
       },
     );

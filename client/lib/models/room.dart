@@ -3,9 +3,15 @@ class Room {
   final String hotelId;
   final String type;
   final double price;
-  final int totalRooms;
-  final int availableRooms;
+  final String roomNumber;
+  final String bedType;
+  final int maxOccupancy;
+  final int? squareFootage;
   final List<String> amenities;
+  final String status;
+  final DateTime? blockedUntil;
+  final String? bookedBy;
+  final DateTime? bookedUntil;
   final DateTime? createdAt;
 
   Room({
@@ -13,9 +19,15 @@ class Room {
     required this.hotelId,
     required this.type,
     required this.price,
-    required this.totalRooms,
-    required this.availableRooms,
+    required this.roomNumber,
+    required this.bedType,
+    required this.maxOccupancy,
+    this.squareFootage,
     required this.amenities,
+    this.status = 'AVAILABLE',
+    this.blockedUntil,
+    this.bookedBy,
+    this.bookedUntil,
     this.createdAt,
   });
 
@@ -25,9 +37,15 @@ class Room {
       hotelId: hotelId,
       type: map['type'] ?? '',
       price: (map['price'] ?? 0).toDouble(),
-      totalRooms: (map['totalRooms'] ?? 0).toInt(),
-      availableRooms: (map['availableRooms'] ?? 0).toInt(),
+      roomNumber: map['roomNumber'] ?? '',
+      bedType: map['bedType'] ?? 'Single',
+      maxOccupancy: (map['maxOccupancy'] ?? 1).toInt(),
+      squareFootage: map['squareFootage'] != null ? (map['squareFootage'] as num).toInt() : null,
       amenities: List<String>.from(map['amenities'] ?? []),
+      status: map['status'] ?? 'AVAILABLE',
+      blockedUntil: map['blockedUntil']?.toDate(),
+      bookedBy: map['bookedBy'],
+      bookedUntil: map['bookedUntil']?.toDate(),
       createdAt: map['createdAt']?.toDate(),
     );
   }
@@ -36,12 +54,18 @@ class Room {
     return {
       'type': type,
       'price': price,
-      'totalRooms': totalRooms,
-      'availableRooms': availableRooms,
+      'roomNumber': roomNumber,
+      'bedType': bedType,
+      'maxOccupancy': maxOccupancy,
       'amenities': amenities,
+      'status': status,
+      if (squareFootage != null) 'squareFootage': squareFootage,
+      if (blockedUntil != null) 'blockedUntil': blockedUntil,
+      if (bookedBy != null) 'bookedBy': bookedBy,
+      if (bookedUntil != null) 'bookedUntil': bookedUntil,
       if (createdAt != null) 'createdAt': createdAt,
     };
   }
 
-  bool get isAvailable => availableRooms > 0;
+  bool get isAvailable => status == 'AVAILABLE';
 }

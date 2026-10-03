@@ -1,0 +1,46 @@
+# Local AI/agent tooling (keep out of the repo)
+.agent/
+.agents/
+.amazonq/
+.augment/
+.bob/
+.claude/
+.cline/
+.clinerules/
+.codeartsdoer/
+.codebuddy/
+.continue/
+.cospec/
+.crush/
+.cursor/
+.devin/
+.factory/
+.forge/
+.gemini/
+.hermes/
+.iflow/
+.junie/
+.kilo/
+.kilocode/
+.kilocode-*/
+.kimi-code/
+.kiro/
+.lingma/
+.omp/
+.opencode/
+.pi/
+.qoder/
+.qwen/
+.roo/
+.rovodev/
+.trae/
+.vibe/
+.zcode/
+
+# Codex/OpenSpec prompt/skill caches (not app code)
+.github/skills/
+.github/prompts/
+
+# Node
+**/node_modules/
+
