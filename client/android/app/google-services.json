@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:3336360452:android:4151ba3098afbe19de1b51",
+        "android_client_info": {
+          "package_name": "com.mac.booking"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:3336360452:android:e69e34c84b477324de1b51",
         "android_client_info": {
           "package_name": "com.mac.booking"

@@ -21,17 +21,18 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o',
-    appId: '1:3336360452:web:YOUR_WEB_APP_ID',
+    apiKey: 'AIzaSyAM0IFIpLcfrCE6HoHaKAin2DZnJhAET30',
+    appId: '1:3336360452:web:91a13983dcc2158ade1b51',
     messagingSenderId: '3336360452',
     projectId: 'lodge-booking-flutter',
     authDomain: 'lodge-booking-flutter.firebaseapp.com',
     storageBucket: 'lodge-booking-flutter.firebasestorage.app',
+    measurementId: 'G-22NTMK8M5R',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o',
-    appId: '1:3336360452:android:e69e34c84b477324de1b51',
+    appId: '1:3336360452:android:4151ba3098afbe19de1b51',
     messagingSenderId: '3336360452',
     projectId: 'lodge-booking-flutter',
     storageBucket: 'lodge-booking-flutter.firebasestorage.app',

@@ -1,4 +1,4 @@
-package com.example.lodge_booking_client
+package com.mac.booking
 
 import io.flutter.embedding.android.FlutterActivity
 
