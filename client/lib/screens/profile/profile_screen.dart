@@ -6,7 +6,9 @@ import '../../screens/info/general_info_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.showBottomNavigationBar = true});
+
+  final bool showBottomNavigationBar;
 
   Future<void> _pickImage(BuildContext context) async {
     final picker = ImagePicker();
@@ -32,7 +34,8 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
     if (source == null) return;
-    final picked = await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
+    final picked =
+        await picker.pickImage(source: source, maxWidth: 512, maxHeight: 512);
     if (picked == null) return;
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +105,8 @@ class ProfileScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   'My Profile',
-                                  style: theme.textTheme.headlineMedium?.copyWith(
+                                  style:
+                                      theme.textTheme.headlineMedium?.copyWith(
                                     color: Colors.white,
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -138,7 +142,8 @@ class ProfileScreen extends StatelessWidget {
                     title: 'General Info',
                     subtitle: 'Terms, Privacy, FAQs, Support',
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const GeneralInfoScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const GeneralInfoScreen()),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -146,7 +151,8 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.bookmark_rounded,
                     title: 'My Bookings',
                     subtitle: 'View and manage your reservations',
-                    onTap: () => Navigator.of(context).pushReplacementNamed('/bookings'),
+                    onTap: () =>
+                        Navigator.of(context).pushReplacementNamed('/bookings'),
                   ),
                   const SizedBox(height: 12),
                   _ProfileTile(
@@ -166,7 +172,8 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: 'Notifications, preferences',
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsScreen()),
                       );
                     },
                   ),
@@ -181,7 +188,8 @@ class ProfileScreen extends StatelessWidget {
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Sign Out'),
-                          content: const Text('Are you sure you want to sign out?'),
+                          content:
+                              const Text('Are you sure you want to sign out?'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -189,7 +197,8 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Sign Out', style: TextStyle(color: Color(0xFFD32F2F))),
+                              child: const Text('Sign Out',
+                                  style: TextStyle(color: Color(0xFFD32F2F))),
                             ),
                           ],
                         ),
@@ -209,29 +218,42 @@ class ProfileScreen extends StatelessWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 3,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              Navigator.of(context).pushReplacementNamed('/home');
-              break;
-            case 1:
-              Navigator.of(context).pushReplacementNamed('/bookings');
-              break;
-            case 2:
-              break;
-            case 3:
-              break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.bookmark_rounded), label: 'Bookings'),
-          NavigationDestination(icon: Icon(Icons.flight_takeoff_rounded), label: 'Trips'),
-          NavigationDestination(icon: Icon(Icons.person_rounded), label: 'Profile'),
-        ],
-      ),
+      bottomNavigationBar: showBottomNavigationBar
+          ? NavigationBar(
+              selectedIndex: 3,
+              onDestinationSelected: (index) {
+                switch (index) {
+                  case 0:
+                    Navigator.of(context).pushReplacementNamed('/home');
+                    break;
+                  case 1:
+                    Navigator.of(context).pushReplacementNamed('/bookings');
+                    break;
+                  case 2:
+                  case 3:
+                    break;
+                }
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.bookmark_rounded),
+                  label: 'Bookings',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.flight_takeoff_rounded),
+                  label: 'Trips',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
@@ -275,11 +297,17 @@ class _ProfileTile extends StatelessWidget {
             color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: iconColor ?? theme.colorScheme.primary, size: 22),
+          child: Icon(icon,
+              color: iconColor ?? theme.colorScheme.primary, size: 22),
         ),
-        title: Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600)),
-        trailing: Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+        title: Text(title,
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle,
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: Colors.grey.shade600)),
+        trailing:
+            Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
         onTap: onTap,
       ),
     );

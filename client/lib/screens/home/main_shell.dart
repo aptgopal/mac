@@ -18,7 +18,7 @@ class _MainShellState extends State<MainShell> {
     HomeScreen(),
     ExploreScreen(),
     TripsScreen(),
-    ProfileScreen(),
+    ProfileScreen(showBottomNavigationBar: false),
   ];
 
   @override
@@ -36,19 +36,31 @@ class _MainShellState extends State<MainShell> {
         },
         destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_rounded, color: _currentIndex == 0 ? theme.colorScheme.primary : Colors.grey),
+            icon: Icon(Icons.home_rounded,
+                color: _currentIndex == 0
+                    ? theme.colorScheme.primary
+                    : Colors.grey),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.explore_rounded, color: _currentIndex == 1 ? theme.colorScheme.primary : Colors.grey),
+            icon: Icon(Icons.explore_rounded,
+                color: _currentIndex == 1
+                    ? theme.colorScheme.primary
+                    : Colors.grey),
             label: 'Explore',
           ),
           NavigationDestination(
-            icon: Icon(Icons.flight_takeoff_rounded, color: _currentIndex == 2 ? theme.colorScheme.primary : Colors.grey),
+            icon: Icon(Icons.flight_takeoff_rounded,
+                color: _currentIndex == 2
+                    ? theme.colorScheme.primary
+                    : Colors.grey),
             label: 'Trips',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_rounded, color: _currentIndex == 3 ? theme.colorScheme.primary : Colors.grey),
+            icon: Icon(Icons.person_rounded,
+                color: _currentIndex == 3
+                    ? theme.colorScheme.primary
+                    : Colors.grey),
             label: 'Profile',
           ),
         ],
