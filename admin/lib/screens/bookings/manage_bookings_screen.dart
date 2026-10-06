@@ -10,6 +10,37 @@ class ManageBookingsScreen extends StatelessWidget {
 
   FirestoreService get _firestore => FirestoreService();
 
+  Future<void> _handleAction(BuildContext context, Booking b, String value) async {
+    switch (value) {
+      case 'PAY_CASH':
+        await _firestore.markBookingPaid(b.id, 'CASH');
+        break;
+      case 'PAY_UPI':
+        await _firestore.markBookingPaid(b.id, 'UPI');
+        break;
+      case 'PAY_PENDING':
+        await _firestore.markBookingUnpaid(b.id);
+        break;
+      default:
+        await _firestore.updateBookingStatus(b.id, value);
+    }
+  }
+
+  Widget _paymentChip(Booking b) {
+    final paid = b.paymentStatus == 'PAID';
+    final method = b.paymentMethod != null ? ' (${b.paymentMethod})' : '';
+    final label = paid ? 'PAID$method' : b.paymentStatus;
+    final color = paid ? const Color(0xFF00C853) : Colors.orange.shade800;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+
   Color _statusColor(String status, ThemeData theme) {
     switch (status.toUpperCase()) {
       case 'CONFIRMED':
@@ -307,24 +338,7 @@ class ManageBookingsScreen extends StatelessWidget {
                                   ),
                                 ),
                                 DataCell(Text('Room ${b.roomNumber}')),
-                                DataCell(
-                                  b.razorpayPaymentId != null
-                                      ? Row(
-                                          children: [
-                                            const Icon(Icons.payments_rounded, size: 16, color: Color(0xFF00C853)),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                b.razorpayPaymentId!,
-                                                style: const TextStyle(fontSize: 12),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      : const Text('Pending', style: TextStyle(color: Colors.orange)),
-                                ),
+                                DataCell(_paymentChip(b)),
                                 DataCell(
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -345,16 +359,15 @@ class ManageBookingsScreen extends StatelessWidget {
                                 DataCell(
                                   PopupMenuButton<String>(
                                     icon: const Icon(Icons.more_vert_rounded, size: 20),
-                                    onSelected: (status) {
-                                      if (status != null) {
-                                        _firestore.updateBookingStatus(b.id, status);
-                                      }
-                                    },
+                                    onSelected: (value) => _handleAction(context, b, value),
                                     itemBuilder: (ctx) => const [
                                       PopupMenuItem(value: 'PENDING', child: Text('Pending')),
                                       PopupMenuItem(value: 'CONFIRMED', child: Text('Confirmed')),
                                       PopupMenuItem(value: 'CHECKED_IN', child: Text('Checked In')),
                                       PopupMenuItem(value: 'CANCELLED', child: Text('Cancelled')),
+                                      PopupMenuItem(value: 'PAY_CASH', child: Text('Paid - Cash')),
+                                      PopupMenuItem(value: 'PAY_UPI', child: Text('Paid - UPI')),
+                                      PopupMenuItem(value: 'PAY_PENDING', child: Text('Payment pending')),
                                     ],
                                   ),
                                 ),
@@ -456,6 +469,8 @@ class ManageBookingsScreen extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 6),
+                                  Align(alignment: Alignment.centerLeft, child: _paymentChip(b)),
                                   if (b.razorpayPaymentId != null) ...[
                                     const SizedBox(height: 6),
                                     Row(
@@ -492,16 +507,15 @@ class ManageBookingsScreen extends StatelessWidget {
                                     children: [
                                       PopupMenuButton<String>(
                                         icon: const Icon(Icons.more_vert_rounded, size: 20),
-                                        onSelected: (status) {
-                                          if (status != null) {
-                                            _firestore.updateBookingStatus(b.id, status);
-                                          }
-                                        },
+                                        onSelected: (value) => _handleAction(context, b, value),
                                         itemBuilder: (ctx) => const [
                                           PopupMenuItem(value: 'PENDING', child: Text('Pending')),
                                           PopupMenuItem(value: 'CONFIRMED', child: Text('Confirmed')),
                                           PopupMenuItem(value: 'CHECKED_IN', child: Text('Checked In')),
                                           PopupMenuItem(value: 'CANCELLED', child: Text('Cancelled')),
+                                          PopupMenuItem(value: 'PAY_CASH', child: Text('Paid - Cash')),
+                                          PopupMenuItem(value: 'PAY_UPI', child: Text('Paid - UPI')),
+                                          PopupMenuItem(value: 'PAY_PENDING', child: Text('Payment pending')),
                                         ],
                                       ),
                                     ],

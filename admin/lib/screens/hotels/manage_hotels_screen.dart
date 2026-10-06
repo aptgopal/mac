@@ -3,12 +3,31 @@ import 'package:intl/intl.dart';
 import '../../models/hotel.dart';
 import '../../services/firestore_service.dart';
 import '../../services/currency_service.dart';
+import '../../models/room.dart';
+import '../rooms/room_form_screen.dart';
 import 'hotel_form_screen.dart';
 
 class ManageHotelsScreen extends StatelessWidget {
   const ManageHotelsScreen({super.key});
 
   FirestoreService get _firestore => FirestoreService();
+
+  Future<void> _addRooms(BuildContext context, Hotel hotel) async {
+    final hotels = await _firestore.streamHotels().first;
+    if (!context.mounted) return;
+    final result = await Navigator.of(context).push<List<Room>>(
+      MaterialPageRoute(
+        builder: (_) => RoomFormScreen(hotels: hotels, initialHotelId: hotel.id),
+      ),
+    );
+    if (result == null || result.isEmpty) return;
+    await _firestore.addRooms(result);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${result.length} room(s) added to ${hotel.name}')),
+      );
+    }
+  }
 
   Future<void> _openForm(BuildContext context, [Hotel? hotel]) async {
     final result = await Navigator.of(context).push<Hotel>(
@@ -175,6 +194,11 @@ class ManageHotelsScreen extends StatelessWidget {
                                     hotel.id,
                                     isActive ? 'INACTIVE' : 'ACTIVE',
                                   ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.add_home_work_rounded, size: 20),
+                                  tooltip: 'Add rooms',
+                                  onPressed: () => _addRooms(context, hotel),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit_rounded, size: 20),
@@ -355,6 +379,11 @@ class ManageHotelsScreen extends StatelessWidget {
                                             hotel.id,
                                             isActive ? 'INACTIVE' : 'ACTIVE',
                                           ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.add_home_work_rounded, size: 20),
+                                          tooltip: 'Add rooms',
+                                          onPressed: () => _addRooms(context, hotel),
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.edit_rounded, size: 20),

@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /hotels/{hotelId} {
+      allow read: if isSignedIn() || resource.data.status == 'ACTIVE';
+      allow write: if isAdmin();
+
+      match /roomTypes/{typeId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+
+      match /rooms/{roomId} {
+        allow read: if isSignedIn() ||
+          get(/databases/$(database)/documents/hotels/$(hotelId)).data.status == 'ACTIVE';
+        allow write: if isAdmin();
+      }
+    }
+
+    // Needed for collectionGroup('rooms') queries in the admin dashboard.
+    match /{path=**}/rooms/{roomId} {
+      allow read: if isAdmin();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /adminNotifications/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /roomLocks/{roomId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid ||
+          resource.data.lockedUntil <= request.time) &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

@@ -155,6 +155,7 @@ class FirestoreService {
       'guestPhone': guestPhone,
       'status': 'PENDING',
       'paymentStatus': 'PENDING',
+      'amount': amount,
       'createdAt': FieldValue.serverTimestamp(),
     });
     return bookingRef.id;

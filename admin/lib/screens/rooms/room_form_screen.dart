@@ -5,7 +5,8 @@ import '../../models/room.dart';
 class RoomFormScreen extends StatefulWidget {
   final List<Hotel> hotels;
   final Room? room;
-  const RoomFormScreen({super.key, required this.hotels, this.room});
+  final String? initialHotelId;
+  const RoomFormScreen({super.key, required this.hotels, this.room, this.initialHotelId});
 
   @override
   State<RoomFormScreen> createState() => _RoomFormScreenState();
@@ -30,7 +31,10 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   void initState() {
     super.initState();
     final r = widget.room;
-    _hotelId = r?.hotelId ?? widget.hotels.first.id;
+    _hotelId = r?.hotelId ??
+        (widget.hotels.any((h) => h.id == widget.initialHotelId)
+            ? widget.initialHotelId!
+            : widget.hotels.first.id);
     _type.text = r?.type ?? '';
     _price.text = r != null ? r.price.toString() : '';
     _roomNumber.text = r?.roomNumber ?? '';
@@ -288,7 +292,28 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                               onPressed: () {
                                 if (!_formKey.currentState!.validate()) return;
                                 final rooms = _buildRooms();
-                                Navigator.of(context).pop(rooms);
+                                final existing = widget.room;
+                                if (existing != null) {
+                                  final edited = rooms.first;
+                                  Navigator.of(context).pop(Room(
+                                    id: existing.id,
+                                    hotelId: existing.hotelId,
+                                    type: edited.type,
+                                    price: edited.price,
+                                    roomNumber: edited.roomNumber,
+                                    bedType: edited.bedType,
+                                    maxOccupancy: edited.maxOccupancy,
+                                    squareFootage: edited.squareFootage,
+                                    amenities: edited.amenities,
+                                    status: edited.status,
+                                    blockedUntil: existing.blockedUntil,
+                                    bookedBy: existing.bookedBy,
+                                    bookedUntil: existing.bookedUntil,
+                                    createdAt: existing.createdAt,
+                                  ));
+                                } else {
+                                  Navigator.of(context).pop(rooms);
+                                }
                               },
                               child: Text(isEdit ? 'Update Room' : 'Add Room'),
                             ),

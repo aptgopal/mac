@@ -14,6 +14,8 @@ class Booking {
   final String guestPhone;
   final String status;
   final String paymentStatus;
+  final String? paymentMethod;
+  final DateTime? paidAt;
   final String? razorpayOrderId;
   final String? razorpayPaymentId;
   final String? razorpaySignature;
@@ -37,6 +39,8 @@ class Booking {
     required this.guestPhone,
     this.status = 'PENDING',
     this.paymentStatus = 'PENDING',
+    this.paymentMethod,
+    this.paidAt,
     this.razorpayOrderId,
     this.razorpayPaymentId,
     this.razorpaySignature,
@@ -62,6 +66,8 @@ class Booking {
       guestPhone: map['guestPhone'] ?? '',
       status: map['status'] ?? 'PENDING',
       paymentStatus: map['paymentStatus'] ?? 'PENDING',
+      paymentMethod: map['paymentMethod'],
+      paidAt: map['paidAt']?.toDate(),
       razorpayOrderId: map['razorpayOrderId'],
       razorpayPaymentId: map['razorpayPaymentId'],
       razorpaySignature: map['razorpaySignature'],
@@ -87,6 +93,8 @@ class Booking {
       'guestPhone': guestPhone,
       'status': status,
       'paymentStatus': paymentStatus,
+      if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (paidAt != null) 'paidAt': paidAt,
       if (razorpayOrderId != null) 'razorpayOrderId': razorpayOrderId,
       if (razorpayPaymentId != null) 'razorpayPaymentId': razorpayPaymentId,
       if (razorpaySignature != null) 'razorpaySignature': razorpaySignature,

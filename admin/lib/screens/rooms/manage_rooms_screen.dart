@@ -11,7 +11,7 @@ class ManageRoomsScreen extends StatelessWidget {
 
   FirestoreService get _firestore => FirestoreService();
 
-  Future<void> _openForm(BuildContext context) async {
+  Future<void> _openForm(BuildContext context, [String? hotelId]) async {
     final hotels = await _firestore.streamHotels().first;
     if (hotels.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -20,7 +20,7 @@ class ManageRoomsScreen extends StatelessWidget {
       return;
     }
     final result = await Navigator.of(context).push<List<Room>>(
-      MaterialPageRoute(builder: (_) => RoomFormScreen(hotels: hotels)),
+      MaterialPageRoute(builder: (_) => RoomFormScreen(hotels: hotels, initialHotelId: hotelId)),
     );
     if (result == null || result.isEmpty) return;
     await _firestore.addRooms(result);
@@ -119,14 +119,68 @@ class _RoomList extends StatelessWidget {
     }
   }
 
+  Widget _typeSummary(List<Room> rooms) {
+    final counts = <String, List<int>>{};
+    for (final r in rooms) {
+      final c = counts.putIfAbsent(r.type, () => [0, 0]);
+      c[0]++;
+      if (r.status == 'AVAILABLE') c[1]++;
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: counts.entries.map((e) {
+            return Chip(
+              backgroundColor: const Color(0xFF003580).withOpacity(0.08),
+              label: Text(
+                '${e.key}: ${e.value[0]} room${e.value[0] == 1 ? '' : 's'} (${e.value[1]} available)',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   Future<void> _blockRoom(BuildContext context, Room room) async {
+    final noteCtrl = TextEditingController();
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Block Room ${room.roomNumber}'),
+        content: TextField(
+          controller: noteCtrl,
+          decoration: const InputDecoration(labelText: 'Note (optional)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'DATES'), child: const Text('Block for dates')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, 'WALK_IN'), child: const Text('Hold for walk-in')),
+        ],
+      ),
+    );
+    final note = noteCtrl.text.trim();
+    noteCtrl.dispose();
+    if (choice == null) return;
+    if (choice == 'WALK_IN') {
+      await firestore.blockRoomForWalkIn(hotelId, room.id,
+          note: note.isEmpty ? 'Walk-in' : note);
+      return;
+    }
+    if (!context.mounted) return;
     final start = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 90)),
     );
-    if (start == null) return;
+    if (start == null || !context.mounted) return;
     final end = await showDatePicker(
       context: context,
       initialDate: start.add(const Duration(days: 1)),
@@ -134,24 +188,21 @@ class _RoomList extends StatelessWidget {
       lastDate: DateTime.now().add(const Duration(days: 91)),
     );
     if (end == null) return;
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Block Reason'),
-        content: TextField(
-          decoration: const InputDecoration(labelText: 'Reason'),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, 'Blocked'), child: const Text('Block')),
-        ],
-      ),
+    await firestore.blockRoom(room.id, start, end, note.isEmpty ? 'Blocked' : note,
+        hotelId: hotelId);
+  }
+
+  Widget _blockButton(BuildContext context, Room room) {
+    final unblockable = room.status == 'BLOCKED' || room.status == 'MAINTENANCE';
+    return IconButton(
+      icon: Icon(unblockable ? Icons.lock_open_rounded : Icons.block_rounded, size: 20),
+      tooltip: unblockable ? 'Make available' : 'Block / hold for walk-in',
+      onPressed: unblockable
+          ? () => firestore.unblockRoom(room.hotelId, room.id)
+          : room.status == 'AVAILABLE'
+              ? () => _blockRoom(context, room)
+              : null,
     );
-    if (reason != null) {
-      await firestore.blockRoom(room.id, start, end, reason, hotelId: hotelId);
-    }
   }
 
   @override
@@ -174,7 +225,11 @@ class _RoomList extends StatelessWidget {
             ),
           );
         }
-        return LayoutBuilder(
+        return Column(
+          children: [
+            _typeSummary(rooms),
+            Expanded(
+              child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth > 800;
             if (isWide) {
@@ -221,13 +276,7 @@ class _RoomList extends StatelessWidget {
                         DataCell(
                           Row(
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.block_rounded, size: 20),
-                                tooltip: 'Block room',
-                                onPressed: room.status == 'AVAILABLE'
-                                    ? () => _blockRoom(context, room)
-                                    : null,
-                              ),
+                              _blockButton(context, room),
                               IconButton(
                                 icon: const Icon(Icons.edit_rounded, size: 20),
                                 tooltip: 'Edit',
@@ -331,13 +380,7 @@ class _RoomList extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.block_rounded, size: 20),
-                            tooltip: 'Block room',
-                            onPressed: room.status == 'AVAILABLE'
-                                ? () => _blockRoom(context, room)
-                                : null,
-                          ),
+                          _blockButton(context, room),
                           IconButton(
                             icon: const Icon(Icons.edit_rounded, size: 20),
                             tooltip: 'Edit',
@@ -366,6 +409,9 @@ class _RoomList extends StatelessWidget {
               },
             );
           },
+              ),
+            ),
+          ],
         );
       },
     );

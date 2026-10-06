@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -8,38 +9,26 @@ import '../../services/currency_service.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  Stream<Map<String, int>> _getRoomCounts() {
-    return FirebaseFirestore.instance
-        .collectionGroup('rooms')
-        .snapshots()
-        .map((snapshot) {
-      int available = 0;
-      int booked = 0;
-      int blocked = 0;
-      int maintenance = 0;
-      
-      for (final doc in snapshot.docs) {
-        final status = doc.data()['status'] ?? 'AVAILABLE';
-        switch (status) {
-          case 'AVAILABLE':
-            available++;
-          case 'BOOKED':
-            booked++;
-          case 'BLOCKED':
-            blocked++;
-          case 'MAINTENANCE':
-            maintenance++;
-        }
+  Stream<_DashStats> _stats() {
+    final db = FirebaseFirestore.instance;
+    final controller = StreamController<_DashStats>();
+    QuerySnapshot<Map<String, dynamic>>? hotels, rooms, bookings;
+    void emit() {
+      if (hotels == null || rooms == null || bookings == null) return;
+      controller.add(_DashStats.compute(hotels!, rooms!, bookings!));
+    }
+
+    final subs = [
+      db.collection('hotels').snapshots().listen((s) { hotels = s; emit(); }),
+      db.collectionGroup('rooms').snapshots().listen((s) { rooms = s; emit(); }),
+      db.collection('bookings').snapshots().listen((s) { bookings = s; emit(); }),
+    ];
+    controller.onCancel = () {
+      for (final s in subs) {
+        s.cancel();
       }
-      
-      return {
-        'available': available,
-        'booked': booked,
-        'blocked': blocked,
-        'maintenance': maintenance,
-        'total': available + booked + blocked + maintenance,
-      };
-    });
+    };
+    return controller.stream;
   }
 
   @override
@@ -57,8 +46,11 @@ class DashboardScreen extends StatelessWidget {
                     icon: const Icon(Icons.notifications_rounded),
                     tooltip: 'Notifications',
                     onPressed: () {
-                      notificationProvider.markAsRead();
-                      Navigator.of(context).pushReplacementNamed('/bookings');
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        builder: (ctx) => _NotificationsSheet(provider: notificationProvider),
+                      );
                     },
                   ),
                   if (notificationProvider.unreadCount > 0)
@@ -119,8 +111,10 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<NotificationProvider>(
-        builder: (context, notificationProvider, child) {
+      body: StreamBuilder<_DashStats>(
+        stream: _stats(),
+        builder: (context, snap) {
+          final stats = snap.data ?? _DashStats.empty();
           return LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 1200;
@@ -137,17 +131,16 @@ class DashboardScreen extends StatelessWidget {
                             child: _StatCard(
                               icon: Icons.hotel_rounded,
                               label: 'Hotels',
-                              count: '12',
+                              count: '${stats.hotels}',
                               color: const Color(0xFF003580),
                               onTap: () => Navigator.of(context).pushReplacementNamed('/hotels'),
                             ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: StreamBuilder<Map<String, int>>(
-                              stream: _getRoomCounts(),
-                              builder: (context, snapshot) {
-                                final total = snapshot.data?['total'] ?? 0;
+                            child: Builder(
+                              builder: (context) {
+                                final total = stats.total;
                                 return _StatCard(
                                   icon: Icons.meeting_room_rounded,
                                   label: 'Rooms',
@@ -163,7 +156,7 @@ class DashboardScreen extends StatelessWidget {
                             child: _StatCard(
                               icon: Icons.book_online_rounded,
                               label: 'Bookings',
-                              count: '${notificationProvider.unreadCount + 156}',
+                              count: '${stats.bookings}',
                               color: const Color(0xFF00C853),
                               onTap: () => Navigator.of(context).pushReplacementNamed('/bookings'),
                             ),
@@ -173,7 +166,7 @@ class DashboardScreen extends StatelessWidget {
                             child: _StatCard(
                               icon: Icons.payments_rounded,
                               label: 'Revenue',
-                              count: CurrencyService.formatInr(12400, decimals: 0),
+                              count: CurrencyService.formatInr(stats.revenue, decimals: 0),
                               color: const Color(0xFFFFC107),
                               onTap: () {},
                             ),
@@ -190,15 +183,14 @@ class DashboardScreen extends StatelessWidget {
                             _StatCard(
                               icon: Icons.hotel_rounded,
                               label: 'Hotels',
-                              count: '12',
+                              count: '${stats.hotels}',
                               color: const Color(0xFF003580),
                               onTap: () => Navigator.of(context).pushReplacementNamed('/hotels'),
                             ),
                             const SizedBox(width: 12),
-                            StreamBuilder<Map<String, int>>(
-                              stream: _getRoomCounts(),
-                              builder: (context, snapshot) {
-                                final total = snapshot.data?['total'] ?? 0;
+                            Builder(
+                              builder: (context) {
+                                final total = stats.total;
                                 return _StatCard(
                                   icon: Icons.meeting_room_rounded,
                                   label: 'Rooms',
@@ -212,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
                             _StatCard(
                               icon: Icons.book_online_rounded,
                               label: 'Bookings',
-                              count: '${notificationProvider.unreadCount + 156}',
+                              count: '${stats.bookings}',
                               color: const Color(0xFF00C853),
                               onTap: () => Navigator.of(context).pushReplacementNamed('/bookings'),
                             ),
@@ -220,7 +212,7 @@ class DashboardScreen extends StatelessWidget {
                             _StatCard(
                               icon: Icons.payments_rounded,
                               label: 'Revenue',
-                              count: CurrencyService.formatInr(12400, decimals: 0),
+                              count: CurrencyService.formatInr(stats.revenue, decimals: 0),
                               color: const Color(0xFFFFC107),
                               onTap: () {},
                             ),
@@ -239,16 +231,15 @@ class DashboardScreen extends StatelessWidget {
                               subtitle: 'Last 7 days',
                               child: SizedBox(
                                 height: 260,
-                                child: _BookingsBarChart(),
+                                child: _BookingsBarChart(labels: stats.labels, values: stats.dailyBookings),
                               ),
                             ),
                           ),
                           const SizedBox(width: 24),
                           Expanded(
-                            child: StreamBuilder<Map<String, int>>(
-                              stream: _getRoomCounts(),
-                              builder: (context, snapshot) {
-                                final data = snapshot.data ?? {'available': 0, 'booked': 0, 'blocked': 0, 'maintenance': 0};
+                            child: Builder(
+                              builder: (context) {
+                                final data = {'available': stats.available, 'booked': stats.booked, 'blocked': stats.blocked, 'maintenance': stats.maintenance};
                                 return _ChartCard(
                                   title: 'Room Status',
                                   subtitle: 'Current distribution',
@@ -275,14 +266,13 @@ class DashboardScreen extends StatelessWidget {
                             subtitle: 'Last 7 days',
                             child: SizedBox(
                               height: 260,
-                              child: _BookingsBarChart(),
+                              child: _BookingsBarChart(labels: stats.labels, values: stats.dailyBookings),
                             ),
                           ),
                           const SizedBox(height: 24),
-                          StreamBuilder<Map<String, int>>(
-                            stream: _getRoomCounts(),
-                            builder: (context, snapshot) {
-                              final data = snapshot.data ?? {'available': 0, 'booked': 0, 'blocked': 0, 'maintenance': 0};
+                          Builder(
+                            builder: (context) {
+                              final data = {'available': stats.available, 'booked': stats.booked, 'blocked': stats.blocked, 'maintenance': stats.maintenance};
                               return _ChartCard(
                                 title: 'Room Status',
                                 subtitle: 'Current distribution',
@@ -306,7 +296,7 @@ class DashboardScreen extends StatelessWidget {
                       subtitle: 'Last 7 days',
                       child: SizedBox(
                         height: 260,
-                        child: _RevenueLineChart(),
+                        child: _RevenueLineChart(labels: stats.labels, values: stats.dailyRevenue),
                       ),
                     ),
                   ],
@@ -457,17 +447,18 @@ class _ChartCard extends StatelessWidget {
 }
 
 class _BookingsBarChart extends StatelessWidget {
-  _BookingsBarChart();
+  const _BookingsBarChart({required this.labels, required this.values});
 
-  final List<String> _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final List<int> _bookings = [12, 18, 15, 22, 28, 35, 25];
+  final List<String> labels;
+  final List<int> values;
 
   @override
   Widget build(BuildContext context) {
+    final peak = values.fold<int>(0, (m, v) => v > m ? v : m);
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: 40,
+        maxY: (peak < 5 ? 5 : peak + 2).toDouble(),
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
@@ -477,7 +468,7 @@ class _BookingsBarChart extends StatelessWidget {
             tooltipMargin: 8,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
-                '${_bookings[groupIndex]}',
+                '${values[groupIndex]}',
                 const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               );
             },
@@ -490,35 +481,26 @@ class _BookingsBarChart extends StatelessWidget {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= _days.length) return const SizedBox();
+                if (index < 0 || index >= labels.length) return const SizedBox();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    _days[index],
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  child: Text(labels[index], style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 );
               },
             ),
           ),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         gridData: const FlGridData(show: false),
-        barGroups: List.generate(_bookings.length, (index) {
+        barGroups: List.generate(values.length, (index) {
           return BarChartGroupData(
             x: index,
             barRods: [
               BarChartRodData(
-                toY: _bookings[index].toDouble(),
+                toY: values[index].toDouble(),
                 color: const Color(0xFF003580),
                 width: 20,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
@@ -645,16 +627,17 @@ class _LegendItem extends StatelessWidget {
 }
 
 class _RevenueLineChart extends StatelessWidget {
-  _RevenueLineChart();
+  const _RevenueLineChart({required this.labels, required this.values});
 
-  final List<String> _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final List<double> _revenue = [1200, 1800, 1500, 2200, 2800, 3500, 2500];
+  final List<String> labels;
+  final List<double> values;
 
   @override
   Widget build(BuildContext context) {
+    final peak = values.fold<double>(0, (m, v) => v > m ? v : m);
     return LineChart(
       LineChartData(
-        maxY: 4000,
+        maxY: peak <= 0 ? 1000 : peak * 1.2,
         minY: 0,
         lineTouchData: LineTouchData(
           enabled: true,
@@ -665,9 +648,9 @@ class _RevenueLineChart extends StatelessWidget {
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.toInt();
-                final label = index >= 0 && index < _days.length ? _days[index] : '';
+                final label = index >= 0 && index < labels.length ? labels[index] : '';
                 return LineTooltipItem(
-                  '$label\n₹${_revenue[index].toInt()}',
+                  '$label\n${CurrencyService.formatInr(values[index], decimals: 0)}',
                   const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 );
               }).toList();
@@ -682,45 +665,216 @@ class _RevenueLineChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= _days.length) return const SizedBox();
+                if (index < 0 || index >= labels.length) return const SizedBox();
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    _days[index],
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
+                  child: Text(labels[index], style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 );
               },
             ),
           ),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         gridData: const FlGridData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: List.generate(_revenue.length, (index) {
-              return FlSpot(index.toDouble(), _revenue[index]);
-            }),
+            spots: List.generate(values.length, (i) => FlSpot(i.toDouble(), values[i])),
             isCurved: true,
             color: const Color(0xFF003580),
             barWidth: 3,
             dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(
-              show: true,
-              color: const Color(0xFF003580).withOpacity(0.1),
-            ),
+            belowBarData: BarAreaData(show: true, color: const Color(0xFF003580).withOpacity(0.1)),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NotificationsSheet extends StatelessWidget {
+  final NotificationProvider provider;
+  const _NotificationsSheet({required this.provider});
+
+  IconData _icon(String type) {
+    switch (type) {
+      case 'CHECKIN_REMINDER':
+        return Icons.login_rounded;
+      case 'CHECKOUT_REMINDER':
+        return Icons.logout_rounded;
+      default:
+        return Icons.book_online_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = provider.notifications;
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+              trailing: TextButton(
+                onPressed: () {
+                  provider.markAsRead();
+                  Navigator.pop(context);
+                },
+                child: const Text('Mark all read'),
+              ),
+            ),
+            const Divider(height: 1),
+            if (items.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Text('No notifications yet'),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (ctx, i) {
+                    final n = items[i];
+                    return ListTile(
+                      leading: Icon(_icon(n.type), color: n.read ? Colors.grey : const Color(0xFF003580)),
+                      title: Text(n.title, style: TextStyle(fontWeight: n.read ? FontWeight.normal : FontWeight.bold)),
+                      subtitle: Text(n.message),
+                      onTap: () => provider.markRead([n.id]),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Aggregates hotels, rooms and bookings into the numbers shown on the dashboard.
+class _DashStats {
+  final int hotels;
+  final int bookings;
+  final double revenue;
+  final int total;
+  final int available;
+  final int booked;
+  final int blocked;
+  final int maintenance;
+  final List<String> labels;
+  final List<int> dailyBookings;
+  final List<double> dailyRevenue;
+
+  _DashStats({
+    required this.hotels,
+    required this.bookings,
+    required this.revenue,
+    required this.total,
+    required this.available,
+    required this.booked,
+    required this.blocked,
+    required this.maintenance,
+    required this.labels,
+    required this.dailyBookings,
+    required this.dailyRevenue,
+  });
+
+  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  factory _DashStats.empty() => _DashStats(
+        hotels: 0,
+        bookings: 0,
+        revenue: 0,
+        total: 0,
+        available: 0,
+        booked: 0,
+        blocked: 0,
+        maintenance: 0,
+        labels: List.filled(7, ''),
+        dailyBookings: List.filled(7, 0),
+        dailyRevenue: List.filled(7, 0),
+      );
+
+  static DateTime _day(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  factory _DashStats.compute(
+    QuerySnapshot<Map<String, dynamic>> hotels,
+    QuerySnapshot<Map<String, dynamic>> rooms,
+    QuerySnapshot<Map<String, dynamic>> bookings,
+  ) {
+    final now = DateTime.now();
+    final today = _day(now);
+
+    final roomPrice = <String, double>{};
+    var blocked = 0, maintenance = 0;
+    for (final r in rooms.docs) {
+      final data = r.data();
+      roomPrice[r.id] = (data['price'] ?? 0).toDouble();
+      final status = data['status'] ?? 'AVAILABLE';
+      if (status == 'BLOCKED') blocked++;
+      if (status == 'MAINTENANCE') maintenance++;
+    }
+
+    final days = List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
+    final dailyBookings = List.filled(7, 0);
+    final dailyRevenue = List.filled(7, 0.0);
+    final occupiedRoomIds = <String>{};
+    var revenue = 0.0;
+    var counted = 0;
+
+    for (final doc in bookings.docs) {
+      final b = doc.data();
+      final status = b['status'] ?? 'PENDING';
+      if (status == 'CANCELLED') continue;
+      counted++;
+
+      final checkIn = (b['checkIn'] as Timestamp?)?.toDate();
+      final checkOut = (b['checkOut'] as Timestamp?)?.toDate();
+      final created = (b['createdAt'] as Timestamp?)?.toDate() ?? checkIn;
+
+      if (checkIn != null && checkOut != null &&
+          !now.isBefore(checkIn) && now.isBefore(checkOut)) {
+        occupiedRoomIds.add(b['roomId'] ?? '');
+      }
+
+      final idx = created == null ? -1 : days.indexOf(_day(created));
+      if (idx >= 0) dailyBookings[idx]++;
+
+      if (b['paymentStatus'] == 'PAID') {
+        var amount = (b['amount'] as num?)?.toDouble();
+        if (amount == null && checkIn != null && checkOut != null) {
+          final nights = _day(checkOut).difference(_day(checkIn)).inDays;
+          amount = (nights < 1 ? 1 : nights) * (roomPrice[b['roomId']] ?? 0);
+        }
+        revenue += amount ?? 0;
+        final paid = (b['paidAt'] as Timestamp?)?.toDate() ?? created;
+        final pIdx = paid == null ? -1 : days.indexOf(_day(paid));
+        if (pIdx >= 0) dailyRevenue[pIdx] += amount ?? 0;
+      }
+    }
+
+    final total = rooms.docs.length;
+    final booked = occupiedRoomIds.length;
+    final available = (total - booked - blocked - maintenance).clamp(0, total);
+
+    return _DashStats(
+      hotels: hotels.docs.length,
+      bookings: counted,
+      revenue: revenue,
+      total: total,
+      available: available,
+      booked: booked,
+      blocked: blocked,
+      maintenance: maintenance,
+      labels: days.map((d) => _weekdays[d.weekday - 1]).toList(),
+      dailyBookings: dailyBookings,
+      dailyRevenue: dailyRevenue,
     );
   }
 }

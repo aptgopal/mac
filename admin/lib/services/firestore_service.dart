@@ -66,13 +66,7 @@ class FirestoreService {
             .toList());
   }
 
-  Future<void> addRoom(Room room) async {
-    await _db
-        .collection('hotels')
-        .doc(room.hotelId)
-        .collection('rooms')
-        .add(room.toMap());
-  }
+  Future<void> addRoom(Room room) => addRooms([room]);
 
   Future<void> addRooms(List<Room> rooms) async {
     if (rooms.isEmpty) return;
@@ -82,16 +76,47 @@ class FirestoreService {
       final docRef = hotelRef.collection('rooms').doc();
       batch.set(docRef, room.toMap());
     }
+    for (final room in rooms) {
+      _setRoomType(batch, hotelRef, room);
+    }
     await batch.commit();
   }
 
   Future<void> updateRoom(Room room) async {
-    await _db
+    final hotelRef = _db.collection('hotels').doc(room.hotelId);
+    final batch = _db.batch();
+    batch.update(hotelRef.collection('rooms').doc(room.id), room.toMap());
+    _setRoomType(batch, hotelRef, room);
+    await batch.commit();
+  }
+
+  // Room types are stored per hotel so admins can reuse them as templates.
+  void _setRoomType(
+      WriteBatch batch, DocumentReference<Map<String, dynamic>> hotelRef, Room room) {
+    final typeId = room.type.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '_');
+    if (typeId.isEmpty) return;
+    batch.set(
+      hotelRef.collection('roomTypes').doc(typeId),
+      {
+        'name': room.type.trim(),
+        'basePrice': room.price,
+        'bedType': room.bedType,
+        'maxOccupancy': room.maxOccupancy,
+        'amenities': room.amenities,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  Stream<List<Map<String, dynamic>>> streamRoomTypes(String hotelId) {
+    return _db
         .collection('hotels')
-        .doc(room.hotelId)
-        .collection('rooms')
-        .doc(room.id)
-        .update(room.toMap());
+        .doc(hotelId)
+        .collection('roomTypes')
+        .orderBy('name')
+        .snapshots()
+        .map((s) => s.docs.map((d) => {'id': d.id, ...d.data()}).toList());
   }
 
   Future<void> updateRoomStatus(
@@ -134,6 +159,40 @@ class FirestoreService {
           .doc(roomId)
           .update(data);
     }
+  }
+
+  /// Holds a room back from online booking so it can be given to walk-in guests.
+  Future<void> blockRoomForWalkIn(
+    String hotelId,
+    String roomId, {
+    DateTime? until,
+    String note = 'Walk-in',
+  }) async {
+    await _db
+        .collection('hotels')
+        .doc(hotelId)
+        .collection('rooms')
+        .doc(roomId)
+        .update({
+      'status': 'BLOCKED',
+      'blockType': 'WALK_IN',
+      'blockReason': note,
+      'blockedUntil': until != null ? Timestamp.fromDate(until) : FieldValue.delete(),
+    });
+  }
+
+  Future<void> unblockRoom(String hotelId, String roomId) async {
+    await _db
+        .collection('hotels')
+        .doc(hotelId)
+        .collection('rooms')
+        .doc(roomId)
+        .update({
+      'status': 'AVAILABLE',
+      'blockType': FieldValue.delete(),
+      'blockReason': FieldValue.delete(),
+      'blockedUntil': FieldValue.delete(),
+    });
   }
 
   Future<void> deleteRoom(String hotelId, String roomId) async {
@@ -192,6 +251,51 @@ class FirestoreService {
 
   Future<void> updateBookingStatus(String bookingId, String status) async {
     await _db.collection('bookings').doc(bookingId).update({'status': status});
+  }
+
+  /// Records an offline (cash / UPI) payment received from the guest.
+  Future<void> markBookingPaid(String bookingId, String method) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'paymentStatus': 'PAID',
+      'paymentMethod': method,
+      'paidAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> markBookingUnpaid(String bookingId) async {
+    await _db.collection('bookings').doc(bookingId).update({
+      'paymentStatus': 'PENDING',
+      'paymentMethod': FieldValue.delete(),
+      'paidAt': FieldValue.delete(),
+    });
+  }
+
+  // ---------------- Admin notifications ----------------
+  Stream<QuerySnapshot<Map<String, dynamic>>> streamNotifications() {
+    return _db
+        .collection('adminNotifications')
+        .orderBy('createdAt', descending: true)
+        .limit(100)
+        .snapshots();
+  }
+
+  /// Creates the notification only if the id doesn't exist yet, so several
+  /// admin sessions can't produce duplicates.
+  Future<void> createNotificationOnce(String id, Map<String, dynamic> data) async {
+    final ref = _db.collection('adminNotifications').doc(id);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (snap.exists) return;
+      tx.set(ref, {...data, 'read': false, 'createdAt': FieldValue.serverTimestamp()});
+    });
+  }
+
+  Future<void> markNotificationsRead(Iterable<String> ids) async {
+    final batch = _db.batch();
+    for (final id in ids) {
+      batch.update(_db.collection('adminNotifications').doc(id), {'read': true});
+    }
+    await batch.commit();
   }
 
   Future<Map<String, dynamic>?> getPaymentByBookingId(String bookingId) async {
