@@ -67,10 +67,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final firestore = FirestoreService();
-      await firestore.lockRoom(widget.room.id, auth.user?.uid ?? 'guest', const Duration(minutes: 10));
+      final userId = auth.firebaseUser?.uid;
+      if (userId == null) {
+        throw StateError('Sign in before starting a booking.');
+      }
+      await firestore.lockRoom(
+        widget.room.id,
+        userId,
+        const Duration(minutes: 10),
+      );
 
       final bookingId = await firestore.createBookingWithPayment(
-        userId: auth.user?.uid ?? '',
+        userId: userId,
         hotelId: widget.hotel.id,
         hotelName: widget.hotel.name,
         roomId: widget.room.id,
@@ -107,22 +115,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
       razorpaySignature: signature,
       paymentStatus: 'PAID',
     );
-    await firestore.updateBookingPayment(_bookingId!, paymentStatus: 'CONFIRMED');
+    await firestore.updateBookingPayment(_bookingId!,
+        paymentStatus: 'CONFIRMED');
     await firestore.releaseRoomLock(widget.room.id);
     if (mounted) {
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF00C853), size: 56),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          icon: const Icon(Icons.check_circle_rounded,
+              color: Color(0xFF00C853), size: 56),
           title: const Text('Booking Confirmed', textAlign: TextAlign.center),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Booking ID: $_bookingId', style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text('Booking ID: $_bookingId',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
-              Text('Payment ID: $paymentId', style: const TextStyle(color: Colors.grey)),
+              Text('Payment ID: $paymentId',
+                  style: const TextStyle(color: Colors.grey)),
             ],
           ),
           actions: [
@@ -154,7 +167,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           content: Text('Payment failed: ${response.message}'),
           backgroundColor: const Color(0xFFD32F2F),
           behavior: SnackBarBehavior.floating,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12))),
         ),
       );
       setState(() => _orderReady = true);
@@ -168,7 +182,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         SnackBar(
           content: Text('External wallet: ${response.walletName}'),
           behavior: SnackBarBehavior.floating,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12))),
         ),
       );
     }
@@ -224,9 +239,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline_rounded, size: 64, color: Color(0xFFD32F2F)),
+                          const Icon(Icons.error_outline_rounded,
+                              size: 64, color: Color(0xFFD32F2F)),
                           const SizedBox(height: 16),
-                          Text('Error: $_error', textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+                          Text('Error: $_error',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyLarge),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(),
@@ -251,12 +269,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (c, o, s) => Container(
                                     color: theme.colorScheme.primaryContainer,
-                                    child: Icon(Icons.hotel_rounded, size: 60, color: theme.colorScheme.primary),
+                                    child: Icon(Icons.hotel_rounded,
+                                        size: 60,
+                                        color: theme.colorScheme.primary),
                                   ),
                                 )
                               : Container(
                                   color: theme.colorScheme.primaryContainer,
-                                  child: Icon(Icons.hotel_rounded, size: 60, color: theme.colorScheme.primary),
+                                  child: Icon(Icons.hotel_rounded,
+                                      size: 60,
+                                      color: theme.colorScheme.primary),
                                 ),
                         ),
                       ),
@@ -289,25 +311,50 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 child: Column(
                                   children: [
-                                    _PaymentRow(icon: Icons.meeting_room_rounded, label: 'Room', value: '${widget.room.roomNumber} (${widget.room.type})'),
+                                    _PaymentRow(
+                                        icon: Icons.meeting_room_rounded,
+                                        label: 'Room',
+                                        value:
+                                            '${widget.room.roomNumber} (${widget.room.type})'),
                                     const SizedBox(height: 12),
-                                    _PaymentRow(icon: Icons.calendar_today_rounded, label: 'Dates', value: '${fmt.format(widget.checkIn)} - ${fmt.format(widget.checkOut)}'),
+                                    _PaymentRow(
+                                        icon: Icons.calendar_today_rounded,
+                                        label: 'Dates',
+                                        value:
+                                            '${fmt.format(widget.checkIn)} - ${fmt.format(widget.checkOut)}'),
                                     const SizedBox(height: 12),
-                                    _PaymentRow(icon: Icons.people_rounded, label: 'Guests', value: '${widget.guests}'),
+                                    _PaymentRow(
+                                        icon: Icons.people_rounded,
+                                        label: 'Guests',
+                                        value: '${widget.guests}'),
                                     const SizedBox(height: 12),
-                                    _PaymentRow(icon: Icons.person_rounded, label: 'Guest', value: widget.guestName),
+                                    _PaymentRow(
+                                        icon: Icons.person_rounded,
+                                        label: 'Guest',
+                                        value: widget.guestName),
                                     const SizedBox(height: 12),
-                                    _PaymentRow(icon: Icons.email_rounded, label: 'Email', value: widget.guestEmail),
+                                    _PaymentRow(
+                                        icon: Icons.email_rounded,
+                                        label: 'Email',
+                                        value: widget.guestEmail),
                                     const SizedBox(height: 12),
-                                    _PaymentRow(icon: Icons.phone_rounded, label: 'Phone', value: widget.guestPhone),
+                                    _PaymentRow(
+                                        icon: Icons.phone_rounded,
+                                        label: 'Phone',
+                                        value: widget.guestPhone),
                                     const Divider(height: 24),
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                                        const Text('Total Amount',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 15)),
                                         Text(
                                           currency.format(_amount, decimals: 2),
-                                          style: theme.textTheme.titleLarge?.copyWith(
+                                          style: theme.textTheme.titleLarge
+                                              ?.copyWith(
                                             color: theme.colorScheme.primary,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -321,18 +368,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFC107).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFFFFC107).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFFFC107).withOpacity(0.3)),
+                                  border: Border.all(
+                                      color: const Color(0xFFFFC107)
+                                          .withOpacity(0.3)),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.lock_clock_rounded, size: 18, color: Color(0xFFE65100)),
+                                    const Icon(Icons.lock_clock_rounded,
+                                        size: 18, color: Color(0xFFE65100)),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         'Room ${widget.room.roomNumber} is locked for 10 minutes',
-                                        style: const TextStyle(color: Color(0xFFE65100), fontWeight: FontWeight.w500, fontSize: 13),
+                                        style: const TextStyle(
+                                            color: Color(0xFFE65100),
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13),
                                       ),
                                     ),
                                   ],
@@ -345,7 +399,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 child: ElevatedButton.icon(
                                   onPressed: _orderReady ? _startPayment : null,
                                   icon: const Icon(Icons.payment_rounded),
-                                  label: const Text('Proceed to Pay', style: TextStyle(fontSize: 16)),
+                                  label: const Text('Proceed to Pay',
+                                      style: TextStyle(fontSize: 16)),
                                 ),
                               ),
                             ],
@@ -365,7 +420,8 @@ class _PaymentRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _PaymentRow({required this.icon, required this.label, required this.value});
+  const _PaymentRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

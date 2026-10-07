@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final bool returnToPrevious;
+
+  const RegisterScreen({super.key, this.returnToPrevious = false});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -45,7 +47,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+      if (mounted) {
+        if (widget.returnToPrevious) {
+          Navigator.of(context).pop(true);
+        } else {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

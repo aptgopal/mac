@@ -35,6 +35,8 @@ class AuthService {
     );
   }
 
+  Future<UserCredential> signInAnonymously() => _auth.signInAnonymously();
+
   Future<String> userRole(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.data()?['role'] ?? 'user';

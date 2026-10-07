@@ -50,22 +50,24 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAM0IFIpLcfrCE6HoHaKAin2DZnJhAET30',
-    appId: '1:3336360452:web:91a13983dcc2158ade1b51',
-    messagingSenderId: '3336360452',
-    projectId: 'lodge-booking-flutter',
-    authDomain: 'lodge-booking-flutter.firebaseapp.com',
-    storageBucket: 'lodge-booking-flutter.firebasestorage.app',
-    measurementId: 'G-22NTMK8M5R',
+    apiKey: 'AIzaSyALlgxNLbMbgRH_QcpisB4rDIUTfhBwrLk',
+    appId: '1:145812182201:web:792a83183b793b4ea3f768',
+    messagingSenderId: '145812182201',
+    projectId: 'hotel-booking-app-7aada',
+    authDomain: 'hotel-booking-app-7aada.firebaseapp.com',
+    databaseURL: 'https://hotel-booking-app-7aada-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hotel-booking-app-7aada.firebasestorage.app',
+    measurementId: 'G-BZCYQ0NKC0',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAM0IFIpLcfrCE6HoHaKAin2DZnJhAET30',
-    appId: '1:3336360452:web:1ac03822b04d2874de1b51',
-    messagingSenderId: '3336360452',
-    projectId: 'lodge-booking-flutter',
-    authDomain: 'lodge-booking-flutter.firebaseapp.com',
-    storageBucket: 'lodge-booking-flutter.firebasestorage.app',
-    measurementId: 'G-2VW9PLHYEW',
+    apiKey: 'AIzaSyALlgxNLbMbgRH_QcpisB4rDIUTfhBwrLk',
+    appId: '1:145812182201:web:792a83183b793b4ea3f768',
+    messagingSenderId: '145812182201',
+    projectId: 'hotel-booking-app-7aada',
+    authDomain: 'hotel-booking-app-7aada.firebaseapp.com',
+    databaseURL: 'https://hotel-booking-app-7aada-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'hotel-booking-app-7aada.firebasestorage.app',
+    measurementId: 'G-BZCYQ0NKC0',
   );
 }

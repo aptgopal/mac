@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool returnToPrevious;
+
+  const LoginScreen({super.key, this.returnToPrevious = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -31,7 +34,13 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (mounted) Navigator.of(context).pushReplacementNamed('/home');
+      if (mounted) {
+        if (widget.returnToPrevious) {
+          Navigator.of(context).pop(true);
+        } else {
+          Navigator.of(context).pushReplacementNamed('/home');
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -190,7 +199,25 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pushNamed('/register'),
+                          onPressed: () {
+                            if (widget.returnToPrevious) {
+                              Navigator.of(context)
+                                  .push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => RegisterScreen(
+                                    returnToPrevious: true,
+                                  ),
+                                ),
+                              )
+                                  .then((registered) {
+                                if (registered == true && mounted) {
+                                  Navigator.of(context).pop(true);
+                                }
+                              });
+                            } else {
+                              Navigator.of(context).pushNamed('/register');
+                            }
+                          },
                           child: const Text(
                             'Sign Up',
                             style: TextStyle(

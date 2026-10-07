@@ -50,7 +50,7 @@ Everything except maybe "Connected device" for iOS should be green.
 ## 2. Create the Firebase project (one time)
 
 1. Go to https://console.firebase.google.com → **Add project** → name it (e.g. `lodge-booking`).
-2. **Build → Authentication → Sign-in method → Email/Password → Enable.**
+2. **Build → Authentication → Sign-in method** → enable **Email/Password** and **Anonymous**. Anonymous sign-in lets guests read Firestore data under the signed-in read rules below.
 3. **Build → Firestore Database → Create database → Start in test mode** (you'll tighten rules later).
 4. **Project settings (gear) → General → Your apps → Add app:**
     - Add an **Android app** (package name e.g. `com.example.lodgebooking`, download `google-services.json` into `client/android/app/`).
@@ -94,39 +94,17 @@ The admin app has **no register screen** — admin accounts are created manually
 
 ---
 
-## 5. Firestore security rules (paste in Firestore → Rules)
+## 5. Firestore security rules
 
+Deploy the rules in `client/firestore.rules` from the `client/` directory:
+
+```powershell
+firebase deploy --only firestore:rules --project hotel-booking-app-7aada
 ```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function isAdmin() {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    match /users/{uid} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == uid;
-    }
-    match /hotels/{hotelId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-      match /rooms/{roomId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-      }
-    }
-    match /bookings/{bookingId} {
-      allow read: if isSignedIn() &&
-        (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid;
-      allow update, delete: if isAdmin();
-    }
-  }
-}
-```
+
+Guest browsing uses Firebase Anonymous Authentication, so enable the **Anonymous**
+provider under **Authentication → Sign-in method** as well as **Email/Password**.
+Guests then satisfy the signed-in read rules without creating an account.
 
 ---
 

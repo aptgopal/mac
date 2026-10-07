@@ -1,45 +1,37 @@
 {
   "project_info": {
-    "project_number": "3336360452",
-    "project_id": "lodge-booking-flutter",
-    "storage_bucket": "lodge-booking-flutter.firebasestorage.app"
+    "project_number": "145812182201",
+    "firebase_url": "https://hotel-booking-app-7aada-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "hotel-booking-app-7aada",
+    "storage_bucket": "hotel-booking-app-7aada.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:3336360452:android:4151ba3098afbe19de1b51",
+        "mobilesdk_app_id": "1:145812182201:android:8c24303481f18502a3f768",
         "android_client_info": {
           "package_name": "com.mac.booking"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "145812182201-ko8f7kbk49s0g545v3df98f1c98d8d3b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o"
+          "current_key": "AIzaSyB8GZqBndb3539ajYFAc2Qpk_LWZUTtNhY"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:3336360452:android:e69e34c84b477324de1b51",
-        "android_client_info": {
-          "package_name": "com.mac.booking"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAgvkYCrWIvgOWYh6SP0dAzEYw515iTZ5o"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145812182201-ko8f7kbk49s0g545v3df98f1c98d8d3b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

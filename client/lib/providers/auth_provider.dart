@@ -8,6 +8,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isGuest = false;
 
   User? get user => _isGuest ? null : _authService.currentUser;
+  User? get firebaseUser => _authService.currentUser;
   Stream<User?> get authStateChanges => _authService.authStateChanges;
   bool get isGuest => _isGuest;
 
@@ -21,24 +22,40 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> register(String email, String password) =>
-      _authService.register(email: email, password: password);
+  Future<void> register(String email, String password) async {
+    await _authService.register(email: email, password: password);
+    await _setGuestMode(false);
+    _isGuest = false;
+    notifyListeners();
+  }
 
-  Future<void> login(String email, String password) =>
-      _authService.login(email: email, password: password);
+  Future<void> login(String email, String password) async {
+    await _authService.login(email: email, password: password);
+    await _setGuestMode(false);
+    _isGuest = false;
+    notifyListeners();
+  }
 
   Future<void> signOut() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('guest_mode');
+    await _setGuestMode(false);
     _isGuest = false;
     await _authService.signOut();
     notifyListeners();
   }
 
   Future<void> signInAsGuest() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('guest_mode', true);
+    await _authService.signInAnonymously();
+    await _setGuestMode(true);
     _isGuest = true;
     notifyListeners();
+  }
+
+  Future<void> _setGuestMode(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (enabled) {
+      await prefs.setBool('guest_mode', true);
+    } else {
+      await prefs.remove('guest_mode');
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuthException;
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../screens/auth/login_screen.dart';
@@ -78,10 +79,25 @@ class GetStartedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               TextButton.icon(
-                onPressed: () {
-                  final auth = Provider.of<AuthProvider>(context, listen: false);
-                  auth.signInAsGuest();
-                  Navigator.of(context).pushReplacementNamed('/home');
+                onPressed: () async {
+                  final auth =
+                      Provider.of<AuthProvider>(context, listen: false);
+                  try {
+                    await auth.signInAsGuest();
+                    if (context.mounted) {
+                      Navigator.of(context).pushReplacementNamed('/home');
+                    }
+                  } on FirebaseAuthException catch (error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            error.message ?? 'Could not continue as a guest.',
+                          ),
+                        ),
+                      );
+                    }
+                  }
                 },
                 icon: const Icon(Icons.arrow_forward_rounded, size: 20),
                 label: const Text('Continue as Guest'),
