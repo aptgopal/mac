@@ -52,14 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 800;
-              return Row(
-                children: [
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 800;
+          return Row(
+            children: [
                   if (isWide)
                     Expanded(
                       flex: 3,
@@ -210,11 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                ],
-              );
-            },
-          ),
-        ),
+            ],
+          );
+        },
       ),
     );
   }

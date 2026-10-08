@@ -226,7 +226,7 @@ class _BookingSelectionScreenState extends State<BookingSelectionScreen> {
                   )
                 else
                   DropdownButtonFormField<String>(
-                    value: _selectedRoomType,
+                    initialValue: _selectedRoomType,
                     decoration: InputDecoration(
                       labelText: 'Room type',
                       prefixIcon: const Icon(Icons.bed_rounded),
@@ -329,7 +329,7 @@ class _BookingSelectionScreenState extends State<BookingSelectionScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
-                  value: _guests,
+                  initialValue: _guests,
                   decoration: const InputDecoration(
                     labelText: 'Guests',
                     prefixIcon: Icon(Icons.people_outline_rounded),

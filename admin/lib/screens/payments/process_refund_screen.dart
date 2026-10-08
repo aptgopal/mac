@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import '../../models/booking.dart';
 import '../../services/firestore_service.dart';
 
 class ProcessRefundScreen extends StatefulWidget {
@@ -53,29 +51,57 @@ class _ProcessRefundScreenState extends State<ProcessRefundScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Process Refund')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            TextField(
-              controller: _amountController,
-              decoration: const InputDecoration(
-                labelText: 'Refund Amount',
-                prefixText: '\$ ',
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Refund amount',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Enter the amount to return to the guest.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: _amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        prefixText: '₹ ',
+                      ),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _processing ? null : _processRefund,
+                        icon: _processing
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.currency_rupee_rounded),
+                        label: Text(
+                            _processing ? 'Processing…' : 'Process refund'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _processing ? null : _processRefund,
-                child: _processing
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Process Refund'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -27,7 +27,7 @@ const List<_NavItem> _navItems = [
   _NavItem(route: '/bookings', label: 'Bookings', icon: Icons.book_online_outlined),
 ];
 
-/// App shell with a Booking.com-style navy sidebar (drawer on narrow screens).
+/// Responsive Material 3 navigation shell for admin destinations.
 class AdminScaffold extends StatelessWidget {
   final String route;
   final String title;
@@ -57,10 +57,11 @@ class AdminScaffold extends StatelessWidget {
         final wide = constraints.maxWidth >= 900;
         if (wide) {
           return Scaffold(
+            backgroundColor: AppColors.background,
             body: Row(
               children: [
                 SizedBox(
-                  width: 250,
+                  width: 264,
                   child: _Sidebar(route: route, onTap: _go),
                 ),
                 Expanded(
@@ -78,7 +79,10 @@ class AdminScaffold extends StatelessWidget {
         }
         return Scaffold(
           appBar: AppBar(title: Text(title), actions: actions),
-          drawer: Drawer(child: _Sidebar(route: route, onTap: _go)),
+          drawer: Drawer(
+            width: 296,
+            child: SafeArea(child: _Sidebar(route: route, onTap: _go)),
+          ),
           body: body,
           floatingActionButton: floatingActionButton,
         );
@@ -95,21 +99,21 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.primary,
+      color: AppColors.surface,
       child: Column(
         children: [
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
+            padding: const EdgeInsets.fromLTRB(24, 30, 20, 24),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.hotel, color: AppColors.primary),
+                  child: const Icon(Icons.hotel_rounded, color: AppColors.primary),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -118,22 +122,22 @@ class _Sidebar extends StatelessWidget {
                     children: [
                       Text('Lodge Booking',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800)),
+                              color: AppColors.text,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700)),
                       Text('Admin Console',
                           style: TextStyle(
-                              color: Colors.white70, fontSize: 12)),
+                              color: AppColors.muted, fontSize: 12)),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          const Divider(color: Colors.white24, height: 1),
+          const Divider(height: 1),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
                 for (final item in _navItems)
                   _NavTile(
@@ -144,7 +148,7 @@ class _Sidebar extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: Colors.white24, height: 1),
+          const Divider(height: 1),
           _LogoutTile(onTap: () async {
             await Provider.of<AuthProvider>(context, listen: false).signOut();
             if (context.mounted) {
@@ -172,24 +176,23 @@ class _NavTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Material(
-        color: active ? AppColors.accent : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        color: active ? AppColors.primary.withOpacity(0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Row(
               children: [
                 Icon(item.icon,
-                    color: active ? AppColors.primary : Colors.white70,
+                    color: active ? AppColors.primary : AppColors.muted,
                     size: 22),
                 const SizedBox(width: 14),
                 Text(item.label,
                     style: TextStyle(
-                      color: active ? AppColors.primary : Colors.white,
-                      fontWeight:
-                          active ? FontWeight.w700 : FontWeight.w500,
+                      color: active ? AppColors.primary : AppColors.text,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 15,
                     )),
               ],
@@ -216,11 +219,11 @@ class _LogoutTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              const Icon(Icons.logout, color: Colors.white70, size: 22),
+              const Icon(Icons.logout, color: AppColors.muted, size: 22),
               const SizedBox(width: 14),
               const Text('Sign out',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.text,
                       fontWeight: FontWeight.w500,
                       fontSize: 15)),
             ],
@@ -239,8 +242,8 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(bottom: BorderSide(color: AppColors.border)),
@@ -248,8 +251,9 @@ class _TopBar extends StatelessWidget {
       child: Row(
         children: [
           Text(title,
-              style: const TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.w800)),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  )),
           const Spacer(),
           if (actions != null) ...actions!,
         ],

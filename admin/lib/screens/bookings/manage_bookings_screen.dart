@@ -4,13 +4,15 @@ import 'package:provider/provider.dart';
 import '../../models/booking.dart';
 import '../../services/firestore_service.dart';
 import '../../providers/notification_provider.dart';
+import '../../widgets/common.dart';
 
 class ManageBookingsScreen extends StatelessWidget {
   const ManageBookingsScreen({super.key});
 
   FirestoreService get _firestore => FirestoreService();
 
-  Future<void> _handleAction(BuildContext context, Booking b, String value) async {
+  Future<void> _handleAction(
+      BuildContext context, Booking b, String value) async {
     switch (value) {
       case 'PAY_CASH':
         await _firestore.markBookingPaid(b.id, 'CASH');
@@ -37,7 +39,9 @@ class ManageBookingsScreen extends StatelessWidget {
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -75,58 +79,41 @@ class ManageBookingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final fmt = DateFormat.yMMMd();
     final theme = Theme.of(context);
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bookings'),
-        actions: [
-          Consumer<NotificationProvider>(
-            builder: (context, notificationProvider, child) {
-              return Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        title: const Text('Filter Bookings'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              title: const Text('All'),
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                            ListTile(
-                              title: const Text('Pending'),
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                            ListTile(
-                              title: const Text('Confirmed'),
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                            ListTile(
-                              title: const Text('Checked In'),
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                            ListTile(
-                              title: const Text('Cancelled'),
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                          ],
-                        ),
+
+    return AdminScaffold(
+      route: '/bookings',
+      title: 'Bookings',
+      actions: [
+        IconButton.filledTonal(
+          tooltip: 'Filter bookings',
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Filter Bookings'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final status in [
+                      'All',
+                      'Pending',
+                      'Confirmed',
+                      'Checked In',
+                      'Cancelled'
+                    ])
+                      ListTile(
+                        title: Text(status),
+                        onTap: () => Navigator.pop(ctx),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.filter_list_rounded, size: 20),
-                  label: const Text('Filter'),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.filter_list_rounded),
+        ),
+        const SizedBox(width: 12),
+      ],
       body: Column(
         children: [
           Consumer<NotificationProvider>(
@@ -135,7 +122,7 @@ class ManageBookingsScreen extends StatelessWidget {
               if (newBookings.isEmpty) {
                 return const SizedBox.shrink();
               }
-              
+
               return Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
@@ -206,7 +193,8 @@ class ManageBookingsScreen extends StatelessWidget {
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF00C853).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF00C853).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
@@ -259,7 +247,7 @@ class ManageBookingsScreen extends StatelessWidget {
                           ),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               );
@@ -270,18 +258,22 @@ class ManageBookingsScreen extends StatelessWidget {
               stream: _firestore.streamBookings(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF003580)));
+                  return const Center(
+                      child:
+                          CircularProgressIndicator(color: Color(0xFF003580)));
                 }
                 final bookings = snapshot.data!;
                 if (bookings.isEmpty) {
                   return Center(
                     child: Column(
                       children: [
-                        Icon(Icons.book_online_rounded, size: 64, color: Colors.grey.shade300),
+                        Icon(Icons.book_online_rounded,
+                            size: 64, color: Colors.grey.shade300),
                         const SizedBox(height: 16),
                         Text(
                           'No bookings yet.',
-                          style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
+                          style: theme.textTheme.bodyLarge
+                              ?.copyWith(color: Colors.grey.shade600),
                         ),
                       ],
                     ),
@@ -294,7 +286,8 @@ class ManageBookingsScreen extends StatelessWidget {
                       return SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
                         child: DataTable(
-                          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8F9FA)),
+                          headingRowColor:
+                              WidgetStateProperty.all(const Color(0xFFF8F9FA)),
                           dataRowMinHeight: 72,
                           dataRowMaxHeight: 72,
                           columns: const [
@@ -312,28 +305,41 @@ class ManageBookingsScreen extends StatelessWidget {
                                 DataCell(
                                   Text(
                                     b.id,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 DataCell(
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text(b.guestName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                                      Text(b.guestEmail, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                      Text(b.guestName,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w500)),
+                                      Text(b.guestEmail,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600)),
                                     ],
                                   ),
                                 ),
                                 DataCell(
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Text('${fmt.format(b.checkIn)} - ${fmt.format(b.checkOut)}'),
-                                      Text('${b.guests} guests', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                      Text(
+                                          '${fmt.format(b.checkIn)} - ${fmt.format(b.checkOut)}'),
+                                      Text('${b.guests} guests',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600)),
                                     ],
                                   ),
                                 ),
@@ -341,7 +347,8 @@ class ManageBookingsScreen extends StatelessWidget {
                                 DataCell(_paymentChip(b)),
                                 DataCell(
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: _statusBgColor(b.status, theme),
                                       borderRadius: BorderRadius.circular(20),
@@ -358,16 +365,32 @@ class ManageBookingsScreen extends StatelessWidget {
                                 ),
                                 DataCell(
                                   PopupMenuButton<String>(
-                                    icon: const Icon(Icons.more_vert_rounded, size: 20),
-                                    onSelected: (value) => _handleAction(context, b, value),
+                                    icon: const Icon(Icons.more_vert_rounded,
+                                        size: 20),
+                                    onSelected: (value) =>
+                                        _handleAction(context, b, value),
                                     itemBuilder: (ctx) => const [
-                                      PopupMenuItem(value: 'PENDING', child: Text('Pending')),
-                                      PopupMenuItem(value: 'CONFIRMED', child: Text('Confirmed')),
-                                      PopupMenuItem(value: 'CHECKED_IN', child: Text('Checked In')),
-                                      PopupMenuItem(value: 'CANCELLED', child: Text('Cancelled')),
-                                      PopupMenuItem(value: 'PAY_CASH', child: Text('Paid - Cash')),
-                                      PopupMenuItem(value: 'PAY_UPI', child: Text('Paid - UPI')),
-                                      PopupMenuItem(value: 'PAY_PENDING', child: Text('Payment pending')),
+                                      PopupMenuItem(
+                                          value: 'PENDING',
+                                          child: Text('Pending')),
+                                      PopupMenuItem(
+                                          value: 'CONFIRMED',
+                                          child: Text('Confirmed')),
+                                      PopupMenuItem(
+                                          value: 'CHECKED_IN',
+                                          child: Text('Checked In')),
+                                      PopupMenuItem(
+                                          value: 'CANCELLED',
+                                          child: Text('Cancelled')),
+                                      PopupMenuItem(
+                                          value: 'PAY_CASH',
+                                          child: Text('Paid - Cash')),
+                                      PopupMenuItem(
+                                          value: 'PAY_UPI',
+                                          child: Text('Paid - UPI')),
+                                      PopupMenuItem(
+                                          value: 'PAY_PENDING',
+                                          child: Text('Payment pending')),
                                     ],
                                   ),
                                 ),
@@ -405,32 +428,41 @@ class ManageBookingsScreen extends StatelessWidget {
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               b.hotelName,
-                                              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF1A1A2E)),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
                                               'Room ${b.roomNumber}',
-                                              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                              style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 13),
                                             ),
                                           ],
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: _statusBgColor(b.status, theme),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color:
+                                              _statusBgColor(b.status, theme),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                         child: Text(
                                           b.status.toUpperCase(),
                                           style: TextStyle(
-                                            color: _statusColor(b.status, theme),
+                                            color:
+                                                _statusColor(b.status, theme),
                                             fontWeight: FontWeight.w600,
                                             fontSize: 12,
                                           ),
@@ -441,12 +473,16 @@ class ManageBookingsScreen extends StatelessWidget {
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [
-                                      Icon(Icons.person_outline_rounded, size: 16, color: Colors.grey.shade500),
+                                      Icon(Icons.person_outline_rounded,
+                                          size: 16,
+                                          color: Colors.grey.shade500),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           b.guestName,
-                                          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                                          style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontSize: 14),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -456,31 +492,43 @@ class ManageBookingsScreen extends StatelessWidget {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      Icon(Icons.calendar_today_rounded, size: 16, color: Colors.grey.shade500),
+                                      Icon(Icons.calendar_today_rounded,
+                                          size: 16,
+                                          color: Colors.grey.shade500),
                                       const SizedBox(width: 6),
                                       Text(
                                         '${fmt.format(b.checkIn)} - ${fmt.format(b.checkOut)}',
-                                        style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                                        style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontSize: 14),
                                       ),
                                       const Spacer(),
                                       Text(
                                         '${b.guests} guest${b.guests > 1 ? "s" : ""}',
-                                        style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                                        style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontSize: 14),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 6),
-                                  Align(alignment: Alignment.centerLeft, child: _paymentChip(b)),
+                                  Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: _paymentChip(b)),
                                   if (b.razorpayPaymentId != null) ...[
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Icon(Icons.payments_rounded, size: 16, color: Colors.grey.shade500),
+                                        Icon(Icons.payments_rounded,
+                                            size: 16,
+                                            color: Colors.grey.shade500),
                                         const SizedBox(width: 6),
                                         Expanded(
                                           child: Text(
                                             b.razorpayPaymentId!,
-                                            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                                            style: TextStyle(
+                                                color: Colors.grey.shade700,
+                                                fontSize: 13),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -492,11 +540,16 @@ class ManageBookingsScreen extends StatelessWidget {
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
-                                        Icon(Icons.undo_rounded, size: 16, color: theme.colorScheme.error),
+                                        Icon(Icons.undo_rounded,
+                                            size: 16,
+                                            color: theme.colorScheme.error),
                                         const SizedBox(width: 6),
                                         Text(
                                           'Refunded',
-                                          style: TextStyle(color: theme.colorScheme.error, fontWeight: FontWeight.w500, fontSize: 13),
+                                          style: TextStyle(
+                                              color: theme.colorScheme.error,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13),
                                         ),
                                       ],
                                     ),
@@ -506,16 +559,33 @@ class ManageBookingsScreen extends StatelessWidget {
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert_rounded, size: 20),
-                                        onSelected: (value) => _handleAction(context, b, value),
+                                        icon: const Icon(
+                                            Icons.more_vert_rounded,
+                                            size: 20),
+                                        onSelected: (value) =>
+                                            _handleAction(context, b, value),
                                         itemBuilder: (ctx) => const [
-                                          PopupMenuItem(value: 'PENDING', child: Text('Pending')),
-                                          PopupMenuItem(value: 'CONFIRMED', child: Text('Confirmed')),
-                                          PopupMenuItem(value: 'CHECKED_IN', child: Text('Checked In')),
-                                          PopupMenuItem(value: 'CANCELLED', child: Text('Cancelled')),
-                                          PopupMenuItem(value: 'PAY_CASH', child: Text('Paid - Cash')),
-                                          PopupMenuItem(value: 'PAY_UPI', child: Text('Paid - UPI')),
-                                          PopupMenuItem(value: 'PAY_PENDING', child: Text('Payment pending')),
+                                          PopupMenuItem(
+                                              value: 'PENDING',
+                                              child: Text('Pending')),
+                                          PopupMenuItem(
+                                              value: 'CONFIRMED',
+                                              child: Text('Confirmed')),
+                                          PopupMenuItem(
+                                              value: 'CHECKED_IN',
+                                              child: Text('Checked In')),
+                                          PopupMenuItem(
+                                              value: 'CANCELLED',
+                                              child: Text('Cancelled')),
+                                          PopupMenuItem(
+                                              value: 'PAY_CASH',
+                                              child: Text('Paid - Cash')),
+                                          PopupMenuItem(
+                                              value: 'PAY_UPI',
+                                              child: Text('Paid - UPI')),
+                                          PopupMenuItem(
+                                              value: 'PAY_PENDING',
+                                              child: Text('Payment pending')),
                                         ],
                                       ),
                                     ],

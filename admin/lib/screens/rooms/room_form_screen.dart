@@ -23,7 +23,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   final _squareFootage = TextEditingController();
   final _amenities = TextEditingController();
   late String _status;
-  bool _isRange = false;
+  final bool _isRange = false;
   final _rangeStart = TextEditingController();
   final _rangeEnd = TextEditingController();
 
@@ -210,7 +210,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                       border: Border.all(color: Colors.grey.shade200),
                                     ),
                                     child: DropdownButtonFormField<String>(
-                                      value: _status,
+                                      initialValue: _status,
                                       decoration: const InputDecoration(
                                         labelText: 'Status',
                                         border: InputBorder.none,
@@ -267,7 +267,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                                 border: Border.all(color: Colors.grey.shade200),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _status,
+                                initialValue: _status,
                                 decoration: const InputDecoration(
                                   labelText: 'Status',
                                   border: InputBorder.none,
@@ -369,7 +369,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(

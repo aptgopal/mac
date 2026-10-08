@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/notification_provider.dart';
 import '../../services/currency_service.dart';
+import '../../widgets/common.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -19,9 +20,18 @@ class DashboardScreen extends StatelessWidget {
     }
 
     final subs = [
-      db.collection('hotels').snapshots().listen((s) { hotels = s; emit(); }),
-      db.collectionGroup('rooms').snapshots().listen((s) { rooms = s; emit(); }),
-      db.collection('bookings').snapshots().listen((s) { bookings = s; emit(); }),
+      db.collection('hotels').snapshots().listen((s) {
+        hotels = s;
+        emit();
+      }),
+      db.collectionGroup('rooms').snapshots().listen((s) {
+        rooms = s;
+        emit();
+      }),
+      db.collection('bookings').snapshots().listen((s) {
+        bookings = s;
+        emit();
+      }),
     ];
     controller.onCancel = () {
       for (final s in subs) {
@@ -33,84 +43,86 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          Consumer<NotificationProvider>(
-            builder: (context, notificationProvider, child) {
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_rounded),
-                    tooltip: 'Notifications',
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        builder: (ctx) => _NotificationsSheet(provider: notificationProvider),
-                      );
-                    },
-                  ),
-                  if (notificationProvider.unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD32F2F),
-                          borderRadius: BorderRadius.circular(10),
+    return AdminScaffold(
+      route: '/dashboard',
+      title: 'Dashboard',
+      actions: [
+        Consumer<NotificationProvider>(
+          builder: (context, notificationProvider, child) {
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_rounded),
+                  tooltip: 'Notifications',
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      builder: (ctx) =>
+                          _NotificationsSheet(provider: notificationProvider),
+                    );
+                  },
+                ),
+                if (notificationProvider.unreadCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD32F2F),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        '${notificationProvider.unreadCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 18,
-                          minHeight: 18,
-                        ),
-                        child: Text(
-                          '${notificationProvider.unreadCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
+                  ),
+              ],
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout_rounded),
+          tooltip: 'Sign out',
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+                title: const Text('Sign Out'),
+                content: const Text('Are you sure you want to sign out?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    },
+                    child: Text('Sign Out',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error)),
+                  ),
                 ],
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Sign out',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  title: const Text('Sign Out'),
-                  content: const Text('Are you sure you want to sign out?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.of(context).pushReplacementNamed('/login');
-                      },
-                      child: Text('Sign Out', style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+      ],
       body: StreamBuilder<_DashStats>(
         stream: _stats(),
         builder: (context, snap) {
@@ -118,107 +130,72 @@ class DashboardScreen extends StatelessWidget {
           return LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 1200;
-              final isMedium = constraints.maxWidth > 800;
               return SingleChildScrollView(
                 padding: EdgeInsets.all(isWide ? 32 : 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (isWide)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.hotel_rounded,
-                              label: 'Hotels',
-                              count: '${stats.hotels}',
-                              color: const Color(0xFF003580),
-                              onTap: () => Navigator.of(context).pushReplacementNamed('/hotels'),
-                            ),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 1200
+                            ? 4
+                            : constraints.maxWidth >= 600
+                                ? 2
+                                : 1;
+                        const gap = 16.0;
+                        final width =
+                            (constraints.maxWidth - gap * (columns - 1)) /
+                                columns;
+                        final cards = [
+                          _StatCard(
+                            icon: Icons.hotel_rounded,
+                            label: 'Hotels',
+                            count: '${stats.hotels}',
+                            color: const Color(0xFF003580),
+                            onTap: () => Navigator.of(context)
+                                .pushReplacementNamed('/hotels'),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Builder(
-                              builder: (context) {
-                                final total = stats.total;
-                                return _StatCard(
-                                  icon: Icons.meeting_room_rounded,
-                                  label: 'Rooms',
-                                  count: '$total',
-                                  color: const Color(0xFF0099FF),
-                                  onTap: () => Navigator.of(context).pushReplacementNamed('/rooms'),
-                                );
-                              },
-                            ),
+                          _StatCard(
+                            icon: Icons.meeting_room_rounded,
+                            label: 'Rooms',
+                            count: '${stats.total}',
+                            color: const Color(0xFF0099FF),
+                            onTap: () => Navigator.of(context)
+                                .pushReplacementNamed('/rooms'),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.book_online_rounded,
-                              label: 'Bookings',
-                              count: '${stats.bookings}',
-                              color: const Color(0xFF00C853),
-                              onTap: () => Navigator.of(context).pushReplacementNamed('/bookings'),
-                            ),
+                          _StatCard(
+                            icon: Icons.book_online_rounded,
+                            label: 'Bookings',
+                            count: '${stats.bookings}',
+                            color: const Color(0xFF00C853),
+                            onTap: () => Navigator.of(context)
+                                .pushReplacementNamed('/bookings'),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _StatCard(
-                              icon: Icons.payments_rounded,
-                              label: 'Revenue',
-                              count: CurrencyService.formatInr(stats.revenue, decimals: 0),
-                              color: const Color(0xFFFFC107),
-                              onTap: () {},
+                          _StatCard(
+                            icon: Icons.payments_rounded,
+                            label: 'Revenue',
+                            count: CurrencyService.formatInr(
+                              stats.revenue,
+                              decimals: 0,
                             ),
+                            color: const Color(0xFFFFC107),
+                            onTap: () {},
                           ),
-                        ],
-                      )
-                    else
-                      SizedBox(
-                        height: 180,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ];
+                        return Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
                           children: [
-                            _StatCard(
-                              icon: Icons.hotel_rounded,
-                              label: 'Hotels',
-                              count: '${stats.hotels}',
-                              color: const Color(0xFF003580),
-                              onTap: () => Navigator.of(context).pushReplacementNamed('/hotels'),
-                            ),
-                            const SizedBox(width: 12),
-                            Builder(
-                              builder: (context) {
-                                final total = stats.total;
-                                return _StatCard(
-                                  icon: Icons.meeting_room_rounded,
-                                  label: 'Rooms',
-                                  count: '$total',
-                                  color: const Color(0xFF0099FF),
-                                  onTap: () => Navigator.of(context).pushReplacementNamed('/rooms'),
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 12),
-                            _StatCard(
-                              icon: Icons.book_online_rounded,
-                              label: 'Bookings',
-                              count: '${stats.bookings}',
-                              color: const Color(0xFF00C853),
-                              onTap: () => Navigator.of(context).pushReplacementNamed('/bookings'),
-                            ),
-                            const SizedBox(width: 12),
-                            _StatCard(
-                              icon: Icons.payments_rounded,
-                              label: 'Revenue',
-                              count: CurrencyService.formatInr(stats.revenue, decimals: 0),
-                              color: const Color(0xFFFFC107),
-                              onTap: () {},
-                            ),
+                            for (final card in cards)
+                              SizedBox(
+                                width: width,
+                                height: 180,
+                                child: card,
+                              ),
                           ],
-                        ),
-                      ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 24),
                     if (isWide)
                       Row(
@@ -231,7 +208,9 @@ class DashboardScreen extends StatelessWidget {
                               subtitle: 'Last 7 days',
                               child: SizedBox(
                                 height: 260,
-                                child: _BookingsBarChart(labels: stats.labels, values: stats.dailyBookings),
+                                child: _BookingsBarChart(
+                                    labels: stats.labels,
+                                    values: stats.dailyBookings),
                               ),
                             ),
                           ),
@@ -239,7 +218,12 @@ class DashboardScreen extends StatelessWidget {
                           Expanded(
                             child: Builder(
                               builder: (context) {
-                                final data = {'available': stats.available, 'booked': stats.booked, 'blocked': stats.blocked, 'maintenance': stats.maintenance};
+                                final data = {
+                                  'available': stats.available,
+                                  'booked': stats.booked,
+                                  'blocked': stats.blocked,
+                                  'maintenance': stats.maintenance
+                                };
                                 return _ChartCard(
                                   title: 'Room Status',
                                   subtitle: 'Current distribution',
@@ -266,13 +250,20 @@ class DashboardScreen extends StatelessWidget {
                             subtitle: 'Last 7 days',
                             child: SizedBox(
                               height: 260,
-                              child: _BookingsBarChart(labels: stats.labels, values: stats.dailyBookings),
+                              child: _BookingsBarChart(
+                                  labels: stats.labels,
+                                  values: stats.dailyBookings),
                             ),
                           ),
                           const SizedBox(height: 24),
                           Builder(
                             builder: (context) {
-                              final data = {'available': stats.available, 'booked': stats.booked, 'blocked': stats.blocked, 'maintenance': stats.maintenance};
+                              final data = {
+                                'available': stats.available,
+                                'booked': stats.booked,
+                                'blocked': stats.blocked,
+                                'maintenance': stats.maintenance
+                              };
                               return _ChartCard(
                                 title: 'Room Status',
                                 subtitle: 'Current distribution',
@@ -296,7 +287,8 @@ class DashboardScreen extends StatelessWidget {
                       subtitle: 'Last 7 days',
                       child: SizedBox(
                         height: 260,
-                        child: _RevenueLineChart(labels: stats.labels, values: stats.dailyRevenue),
+                        child: _RevenueLineChart(
+                            labels: stats.labels, values: stats.dailyRevenue),
                       ),
                     ),
                   ],
@@ -328,9 +320,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isWide = MediaQuery.of(context).size.width > 1200;
     return Container(
-      width: isWide ? null : 200,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -469,7 +459,8 @@ class _BookingsBarChart extends StatelessWidget {
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 '${values[groupIndex]}',
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               );
             },
           ),
@@ -481,17 +472,23 @@ class _BookingsBarChart extends StatelessWidget {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= labels.length) return const SizedBox();
+                if (index < 0 || index >= labels.length) {
+                  return const SizedBox();
+                }
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(labels[index], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  child: Text(labels[index],
+                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 );
               },
             ),
           ),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         gridData: const FlGridData(show: false),
@@ -503,7 +500,8 @@ class _BookingsBarChart extends StatelessWidget {
                 toY: values[index].toDouble(),
                 color: const Color(0xFF003580),
                 width: 20,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(6)),
               ),
             ],
           );
@@ -512,7 +510,6 @@ class _BookingsBarChart extends StatelessWidget {
     );
   }
 }
-
 
 class _DynamicRoomStatusPieChart extends StatelessWidget {
   const _DynamicRoomStatusPieChart({
@@ -539,41 +536,55 @@ class _DynamicRoomStatusPieChart extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        PieChart(
-          PieChartData(
-            sectionsSpace: 2,
-            centerSpaceRadius: 40,
-            sections: [
-              PieChartSectionData(
-                value: available.toDouble(),
-                color: const Color(0xFF00C853),
-                title: 'Available\n$available',
-                radius: 60,
-                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              PieChartSectionData(
-                value: booked.toDouble(),
-                color: const Color(0xFFD32F2F),
-                title: 'Booked\n$booked',
-                radius: 60,
-                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              PieChartSectionData(
-                value: blocked.toDouble(),
-                color: const Color(0xFFFFC107),
-                title: 'Blocked\n$blocked',
-                radius: 60,
-                titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-              if (maintenance > 0)
+        Expanded(
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 40,
+              sections: [
                 PieChartSectionData(
-                  value: maintenance.toDouble(),
-                  color: Colors.grey,
-                  title: 'Maint.\n$maintenance',
+                  value: available.toDouble(),
+                  color: const Color(0xFF00C853),
+                  title: 'Available\n$available',
                   radius: 60,
-                  titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
                 ),
-            ],
+                PieChartSectionData(
+                  value: booked.toDouble(),
+                  color: const Color(0xFFD32F2F),
+                  title: 'Booked\n$booked',
+                  radius: 60,
+                  titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
+                ),
+                PieChartSectionData(
+                  value: blocked.toDouble(),
+                  color: const Color(0xFFFFC107),
+                  title: 'Blocked\n$blocked',
+                  radius: 60,
+                  titleStyle: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
+                ),
+                if (maintenance > 0)
+                  PieChartSectionData(
+                    value: maintenance.toDouble(),
+                    color: Colors.grey,
+                    title: 'Maint.\n$maintenance',
+                    radius: 60,
+                    titleStyle: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
+                  ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 24),
@@ -581,14 +592,26 @@ class _DynamicRoomStatusPieChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _LegendItem(color: const Color(0xFF00C853), label: 'Available', value: '$available'),
+            _LegendItem(
+                color: const Color(0xFF00C853),
+                label: 'Available',
+                value: '$available'),
             const SizedBox(height: 8),
-            _LegendItem(color: const Color(0xFFD32F2F), label: 'Booked', value: '$booked'),
+            _LegendItem(
+                color: const Color(0xFFD32F2F),
+                label: 'Booked',
+                value: '$booked'),
             const SizedBox(height: 8),
-            _LegendItem(color: const Color(0xFFFFC107), label: 'Blocked', value: '$blocked'),
+            _LegendItem(
+                color: const Color(0xFFFFC107),
+                label: 'Blocked',
+                value: '$blocked'),
             if (maintenance > 0) ...[
               const SizedBox(height: 8),
-              _LegendItem(color: Colors.grey, label: 'Maintenance', value: '$maintenance'),
+              _LegendItem(
+                  color: Colors.grey,
+                  label: 'Maintenance',
+                  value: '$maintenance'),
             ],
           ],
         ),
@@ -602,7 +625,8 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const _LegendItem({required this.color, required this.label, required this.value});
+  const _LegendItem(
+      {required this.color, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -648,10 +672,12 @@ class _RevenueLineChart extends StatelessWidget {
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.toInt();
-                final label = index >= 0 && index < labels.length ? labels[index] : '';
+                final label =
+                    index >= 0 && index < labels.length ? labels[index] : '';
                 return LineTooltipItem(
                   '$label\n${CurrencyService.formatInr(values[index], decimals: 0)}',
-                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
                 );
               }).toList();
             },
@@ -665,28 +691,36 @@ class _RevenueLineChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < 0 || index >= labels.length) return const SizedBox();
+                if (index < 0 || index >= labels.length) {
+                  return const SizedBox();
+                }
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(labels[index], style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  child: Text(labels[index],
+                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 );
               },
             ),
           ),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         gridData: const FlGridData(show: false),
         lineBarsData: [
           LineChartBarData(
-            spots: List.generate(values.length, (i) => FlSpot(i.toDouble(), values[i])),
+            spots: List.generate(
+                values.length, (i) => FlSpot(i.toDouble(), values[i])),
             isCurved: true,
             color: const Color(0xFF003580),
             barWidth: 3,
             dotData: const FlDotData(show: true),
-            belowBarData: BarAreaData(show: true, color: const Color(0xFF003580).withOpacity(0.1)),
+            belowBarData: BarAreaData(
+                show: true, color: const Color(0xFF003580).withOpacity(0.1)),
           ),
         ],
       ),
@@ -714,12 +748,14 @@ class _NotificationsSheet extends StatelessWidget {
     final items = provider.notifications;
     return SafeArea(
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Notifications',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               trailing: TextButton(
                 onPressed: () {
                   provider.markAsRead();
@@ -742,8 +778,14 @@ class _NotificationsSheet extends StatelessWidget {
                   itemBuilder: (ctx, i) {
                     final n = items[i];
                     return ListTile(
-                      leading: Icon(_icon(n.type), color: n.read ? Colors.grey : const Color(0xFF003580)),
-                      title: Text(n.title, style: TextStyle(fontWeight: n.read ? FontWeight.normal : FontWeight.bold)),
+                      leading: Icon(_icon(n.type),
+                          color:
+                              n.read ? Colors.grey : const Color(0xFF003580)),
+                      title: Text(n.title,
+                          style: TextStyle(
+                              fontWeight: n.read
+                                  ? FontWeight.normal
+                                  : FontWeight.bold)),
                       subtitle: Text(n.message),
                       onTap: () => provider.markRead([n.id]),
                     );
@@ -838,8 +880,10 @@ class _DashStats {
       final checkOut = (b['checkOut'] as Timestamp?)?.toDate();
       final created = (b['createdAt'] as Timestamp?)?.toDate() ?? checkIn;
 
-      if (checkIn != null && checkOut != null &&
-          !now.isBefore(checkIn) && now.isBefore(checkOut)) {
+      if (checkIn != null &&
+          checkOut != null &&
+          !now.isBefore(checkIn) &&
+          now.isBefore(checkOut)) {
         occupiedRoomIds.add(b['roomId'] ?? '');
       }
 

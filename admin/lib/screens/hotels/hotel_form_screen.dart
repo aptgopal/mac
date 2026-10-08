@@ -154,7 +154,7 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
                                       border: Border.all(color: Colors.grey.shade200),
                                     ),
                                     child: DropdownButtonFormField<String>(
-                                      value: _status,
+                                      initialValue: _status,
                                       decoration: const InputDecoration(
                                         labelText: 'Status',
                                         border: InputBorder.none,
@@ -209,7 +209,7 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
                                 border: Border.all(color: Colors.grey.shade200),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _status,
+                                initialValue: _status,
                                 decoration: const InputDecoration(
                                   labelText: 'Status',
                                   border: InputBorder.none,

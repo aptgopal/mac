@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/hotel.dart';
 import '../../services/firestore_service.dart';
 import '../../services/currency_service.dart';
 import '../../models/room.dart';
+import '../../widgets/common.dart';
 import '../rooms/room_form_screen.dart';
 import 'hotel_form_screen.dart';
 
@@ -57,20 +57,19 @@ class ManageHotelsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hotels'),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            child: ElevatedButton.icon(
-              onPressed: () => _openForm(context),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Add Hotel'),
-            ),
+    return AdminScaffold(
+      route: '/hotels',
+      title: 'Hotels',
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: FilledButton.icon(
+            onPressed: () => _openForm(context),
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: const Text('Add Hotel'),
           ),
-        ],
-      ),
+        ),
+      ],
       body: StreamBuilder<List<Hotel>>(
         stream: _firestore.streamHotels(),
         builder: (context, snapshot) {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/hotel.dart';
 import '../../models/room.dart';
 import '../../services/firestore_service.dart';
 import '../../services/currency_service.dart';
+import '../../widgets/common.dart';
 import 'room_form_screen.dart';
 
 class ManageRoomsScreen extends StatelessWidget {
@@ -33,20 +33,19 @@ class ManageRoomsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rooms & Availability'),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            child: ElevatedButton.icon(
-              onPressed: () => _openForm(context),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Add Room'),
-            ),
+    return AdminScaffold(
+      route: '/rooms',
+      title: 'Rooms & Availability',
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: FilledButton.icon(
+            onPressed: () => _openForm(context),
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: const Text('Add Room'),
           ),
-        ],
-      ),
+        ),
+      ],
       body: StreamBuilder<List<Hotel>>(
         stream: _firestore.streamHotels(),
         builder: (context, hotelSnap) {
